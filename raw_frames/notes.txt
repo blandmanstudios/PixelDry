@@ -8,4 +8,13 @@ ffmpeg -framerate 24 -pattern_type glob -i '*.png' -c:v libx264 -r 30 -pix_fmt y
 # write 1 image per second to 30fps video
 ffmpeg -framerate 1 -pattern_type glob -i '*.png' -c:v libx264 -r 30 -pix_fmt yuv420p output.mp4
 
+# try with midjourney images
+cd raw_frames/midjourney_render_example1
+ffmpeg -framerate 1 -pattern_type glob -i '*.webp' -c:v libx264 -r 30 -pix_fmt yuv420p output.mp4
+
+
+# convert the final image to a webp that is last alphanumerically so it can
+# glob match the pattern above
+ffmpeg -i ltapiasb_a_scene_of_film_noir_expressionist_art_8k_photorealist_e1dfc9ef-0ff3-4981-b8af-d052a3764ec2.png -c:v libwebp z_final.webp
+
 
