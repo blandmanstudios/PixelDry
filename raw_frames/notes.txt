@@ -18,3 +18,6 @@ ffmpeg -framerate 1 -pattern_type glob -i '*.webp' -c:v libx264 -r 30 -pix_fmt y
 ffmpeg -i ltapiasb_a_scene_of_film_noir_expressionist_art_8k_photorealist_e1dfc9ef-0ff3-4981-b8af-d052a3764ec2.png -c:v libwebp z_final.webp
 
 
+
+# encode the images with some music
+ffmpeg -framerate 1 -pattern_type glob -i '*.webp' -i ../../music/meizong-salt-mines/meizong-salt-mines.mp3 -map 0:v -map 1:a -shortest -c:v libx264 -r 30 -pix_fmt yuv420p output.mp4
