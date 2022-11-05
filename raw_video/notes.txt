@@ -1,0 +1,18 @@
+
+
+# record a test video with obs as mkv then rename it
+mv <path_to_obs_capture> streambeatslofi.mkv
+
+# convert to mp4
+ffmpeg -i streambeatslofi.mkv -c copy streambeatslofi.mp4
+
+# save your stream url and key
+export STREAM_URL=<stream_url_without_rtmp://>
+export STREAM_KEY=<get from yt>
+
+# stream my mp4 file to youtube once
+ffmpeg -i streambeatslofi.mp4 -c:v libx264 -f flv rtmp://$STREAM_URL/$STREAM_KEY
+# stream my mp4 file to youtube on a loop
+ffmpeg -stream_loop -1 -i streambeatslofi.mp4 -c:v libx264 -f flv rtmp://$STREAM_URL/$STREAM_KEY
+
+
