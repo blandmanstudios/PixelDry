@@ -5,3 +5,7 @@ source env/bin/activate
 python3 -m pip install requests
 
 ./scape.py
+
+# created an app in discord called watching-computers-draw
+
+python3 -m pip install pyyaml
