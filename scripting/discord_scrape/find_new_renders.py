@@ -1,0 +1,62 @@
+#!/usr/bin/env python3
+
+import requests
+import yaml
+import json
+from time import sleep
+import sqlite3
+
+
+
+API_ENDPOINT = 'https://discord.com/api/v10'
+
+def main():
+    with open('secure_params.yml', 'r') as file:
+        params = yaml.safe_load(file)
+    headers={
+            'Authorization': f'{params["access_token"]}'
+    }
+    mjn_chan_id = '989268312036896818'
+    found_a_zero = False
+    con = sqlite3.connect('local_state.db')
+    cur = con.cursor()
+    query_string = "CREATE TABLE IF NOT EXISTS renders (render_id INTEGER PRIMARY KEY, channel_id varchar(100), message_id varchar(100), unique (message_id, channel_id));"
+    cur.execute(query_string)
+    # found = []
+    for i in range(100):
+        resp = requests.get(f"{API_ENDPOINT}/channels/{mjn_chan_id}/messages?limit=10", headers=headers)
+        res = resp.json()
+        json_formatted_str = json.dumps(res, indent=4)
+        for item in res:
+            if (type(item) is not dict):
+                continue
+            if item['author']['username'] == 'Midjourney Bot':
+                status = item['content'].split(' ')[-2:-1][0]
+                print(status)
+                if 'rate' in status:
+                    print(item)
+                    return
+                other_status = item['content'].split(' ')[-1:]
+                if '(' in status and '%)' in status:
+                    # this message is in progress
+                    if '(0%)' in status:
+                        print('foundone')
+                        message_id = item['id']
+                        channel_id = mjn_chan_id
+                        # if (message_id, channel_id) not in found:
+                        #     found.append((message_id, channel_id))
+                        query = f"""
+                            INSERT OR IGNORE INTO renders (message_id, channel_id)
+                            VALUES ('{message_id}', '{channel_id}');
+                        """;
+                        print(query)
+                        con.execute(query)
+                        con.commit()
+        # print(found)
+        sleep(1)
+    print('done')
+    return
+
+
+if __name__ == '__main__':
+    main()
