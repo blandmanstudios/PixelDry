@@ -19,8 +19,6 @@ def main():
     mjn_chan_id = '989268312036896818'
     con = sqlite3.connect('local_state.db')
     cur = con.cursor()
-    query_string = "CREATE TABLE IF NOT EXISTS progressions (progression_id INTEGER PRIMARY KEY, channel_id varchar(100), message_id varchar(100), content TEXT, author_username varchar(100), author_discriminator varchar(100), timestamp varchar(100), percentage varchar(100), render_id varchar(100), beginning_id INTEGER, filename text, url text, unique (message_id, channel_id, percentage), FOREIGN KEY(beginning_id) REFERENCES beginnings(beginning_id));"
-    cur.execute(query_string)
     for i in range(200):
         query = "SELECT * from beginnings WHERE processed = 'FALSE' AND num_tries < 200"
         cur.execute(query)
@@ -44,8 +42,8 @@ def main():
                     # print(query)
                     if len(cur.execute(query).fetchall()) == 0:
                         query = f"""
-                            INSERT OR IGNORE INTO progressions (message_id, channel_id, content, author_username, author_discriminator, timestamp, percentage, render_id, beginning_id, filename, url)
-                            VALUES ('{message_id}', '{channel_id}', '{content}', '{author_username}', '{author_discriminator}', '{timestamp}', '{percentage}', '{render_id}', '{beginning_id}', '{filename}', '{url}');
+                            INSERT OR IGNORE INTO progressions (message_id, channel_id, content, author_username, author_discriminator, timestamp, percentage, render_id, beginning_id, filename, url, is_downloaded)
+                            VALUES ('{message_id}', '{channel_id}', '{content}', '{author_username}', '{author_discriminator}', '{timestamp}', '{percentage}', '{render_id}', '{beginning_id}', '{filename}', '{url}', 'FALSE');
                         """;
                         # print(query)
                         cur.execute(query)

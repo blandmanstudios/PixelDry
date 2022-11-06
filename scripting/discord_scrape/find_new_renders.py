@@ -22,9 +22,9 @@ def main():
     cur = con.cursor()
     query_string = "CREATE TABLE IF NOT EXISTS beginnings (beginning_id INTEGER PRIMARY KEY, channel_id varchar(100), message_id varchar(100), content TEXT, author_username varchar(100), author_discriminator varchar(100), timestamp varchar(100), processed INTEGER, num_tries INTEGER, unique (message_id, channel_id));"
     cur.execute(query_string)
-    query_string = "CREATE TABLE IF NOT EXISTS endings (ending_id INTEGER PRIMARY KEY, channel_id varchar(100), message_id varchar(100), content TEXT, author_username varchar(100), author_discriminator varchar(100), timestamp varchar(100), render_id varchar(100), filename text, url text, beginning_id INTEGER, unique (message_id, channel_id), FOREIGN KEY(beginning_id) REFERENCES beginnings(beginning_id));"
+    query_string = "CREATE TABLE IF NOT EXISTS endings (ending_id INTEGER PRIMARY KEY, channel_id varchar(100), message_id varchar(100), content TEXT, author_username varchar(100), author_discriminator varchar(100), timestamp varchar(100), render_id varchar(100), filename text, url text, beginning_id INTEGER, is_downloaded INTEGER, unique (message_id, channel_id), FOREIGN KEY(beginning_id) REFERENCES beginnings(beginning_id));"
     cur.execute(query_string)
-    query_string = "CREATE TABLE IF NOT EXISTS progressions (progression_id INTEGER PRIMARY KEY, channel_id varchar(100), message_id varchar(100), content TEXT, author_username varchar(100), author_discriminator varchar(100), timestamp varchar(100), percentage varchar(100), render_id varchar(100), beginning_id INTEGER, filename text, url text, unique (message_id, channel_id, percentage), FOREIGN KEY(beginning_id) REFERENCES beginnings(beginning_id));"
+    query_string = "CREATE TABLE IF NOT EXISTS progressions (progression_id INTEGER PRIMARY KEY, channel_id varchar(100), message_id varchar(100), content TEXT, author_username varchar(100), author_discriminator varchar(100), timestamp varchar(100), percentage varchar(100), render_id varchar(100), beginning_id INTEGER, filename text, url text, is_downloaded INTEGER, unique (message_id, channel_id, percentage), FOREIGN KEY(beginning_id) REFERENCES beginnings(beginning_id));"
     cur.execute(query_string)
     # found = []
     for i in range(100):
@@ -87,8 +87,8 @@ def main():
                                 cur.execute(query)
                                 con.commit()
                                 query = f"""
-                                    INSERT OR IGNORE INTO endings (message_id, channel_id, content, author_username, author_discriminator, timestamp, render_id, filename, url, beginning_id)
-                                    VALUES ('{message_id}', '{channel_id}', '{content}', '{author_username}', '{author_discriminator}', '{timestamp}', '{render_id}', '{filename}', '{url}', '{sql_beginning_id}');
+                                    INSERT OR IGNORE INTO endings (message_id, channel_id, content, author_username, author_discriminator, timestamp, render_id, filename, url, beginning_id, is_downloaded)
+                                    VALUES ('{message_id}', '{channel_id}', '{content}', '{author_username}', '{author_discriminator}', '{timestamp}', '{render_id}', '{filename}', '{url}', '{sql_beginning_id}', 'FALSE');
                                 """;
                                 # print(query)
                                 con.execute(query)
