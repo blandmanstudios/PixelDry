@@ -22,7 +22,9 @@ def main():
     cur = con.cursor()
     query_string = "CREATE TABLE IF NOT EXISTS beginnings (beginning_id INTEGER PRIMARY KEY, channel_id varchar(100), message_id varchar(100), content TEXT, author_username varchar(100), author_discriminator varchar(100), timestamp varchar(100), processed INTEGER, num_tries INTEGER, unique (message_id, channel_id));"
     cur.execute(query_string)
-    query_string = "CREATE TABLE IF NOT EXISTS endings (ending_id INTEGER PRIMARY KEY, channel_id varchar(100), message_id varchar(100), content TEXT, author_username varchar(100), author_discriminator varchar(100), timestamp varchar(100), render_id varchar(100), filename text, url text, unique (message_id, channel_id));"
+    query_string = "CREATE TABLE IF NOT EXISTS endings (ending_id INTEGER PRIMARY KEY, channel_id varchar(100), message_id varchar(100), content TEXT, author_username varchar(100), author_discriminator varchar(100), timestamp varchar(100), render_id varchar(100), filename text, url text, beginning_id INTEGER, unique (message_id, channel_id), FOREIGN KEY(beginning_id) REFERENCES beginnings(beginning_id));"
+    cur.execute(query_string)
+    query_string = "CREATE TABLE IF NOT EXISTS progressions (progression_id INTEGER PRIMARY KEY, channel_id varchar(100), message_id varchar(100), content TEXT, author_username varchar(100), author_discriminator varchar(100), timestamp varchar(100), percentage varchar(100), render_id varchar(100), beginning_id INTEGER, filename text, url text, unique (message_id, channel_id, percentage), FOREIGN KEY(beginning_id) REFERENCES beginnings(beginning_id));"
     cur.execute(query_string)
     # found = []
     for i in range(100):
@@ -76,14 +78,21 @@ def main():
                         url = attachment['url']
                         if '.png' in filename:
                             render_id = filename.rstrip('.png').split('_')[-1]
-                            # print(render_id)
                             query = f"""
-                                INSERT OR IGNORE INTO endings (message_id, channel_id, content, author_username, author_discriminator, timestamp, render_id, filename, url)
-                                VALUES ('{message_id}', '{channel_id}', '{content}', '{author_username}', '{author_discriminator}', '{timestamp}', '{render_id}', '{filename}', '{url}');
-                            """;
-                            # print(query)
-                            con.execute(query)
-                            con.commit()
+                                select render_id, progressions.beginning_id FROM progressions WHERE render_id = '{render_id}' LIMIT 1;
+                            """
+                            cur.execute(query)
+                            for sql_render_id, sql_beginning_id in cur.fetchall():
+                                query = f"UPDATE beginnings SET processed = 'TRUE' WHERE beginning_id = '{sql_beginning_id}' AND processed='FALSE'"
+                                cur.execute(query)
+                                con.commit()
+                                query = f"""
+                                    INSERT OR IGNORE INTO endings (message_id, channel_id, content, author_username, author_discriminator, timestamp, render_id, filename, url, beginning_id)
+                                    VALUES ('{message_id}', '{channel_id}', '{content}', '{author_username}', '{author_discriminator}', '{timestamp}', '{render_id}', '{filename}', '{url}', '{sql_beginning_id}');
+                                """;
+                                # print(query)
+                                con.execute(query)
+                                con.commit()
         # print(found)
         sleep(1)
     print('done')
