@@ -20,7 +20,9 @@ def main():
     found_a_zero = False
     con = sqlite3.connect('local_state.db')
     cur = con.cursor()
-    query_string = "CREATE TABLE IF NOT EXISTS beginnings (render_id INTEGER PRIMARY KEY, channel_id varchar(100), message_id varchar(100), content TEXT, author_username varchar(100), author_discriminator varchar(100), timestamp varchar(100), processed INTEGER, unique (message_id, channel_id));"
+    query_string = "CREATE TABLE IF NOT EXISTS beginnings (beginning_id INTEGER PRIMARY KEY, channel_id varchar(100), message_id varchar(100), content TEXT, author_username varchar(100), author_discriminator varchar(100), timestamp varchar(100), processed INTEGER, unique (message_id, channel_id));"
+    cur.execute(query_string)
+    query_string = "CREATE TABLE IF NOT EXISTS endings (ending_id INTEGER PRIMARY KEY, channel_id varchar(100), message_id varchar(100), content TEXT, author_username varchar(100), author_discriminator varchar(100), timestamp varchar(100), render_id varchar(100), filename text, url text, unique (message_id, channel_id));"
     cur.execute(query_string)
     # found = []
     for i in range(100):
@@ -55,9 +57,31 @@ def main():
                             INSERT OR IGNORE INTO beginnings (message_id, channel_id, content, author_username, author_discriminator, timestamp, processed)
                             VALUES ('{message_id}', '{channel_id}', '{content}', '{author_username}', '{author_discriminator}', '{timestamp}', 'FALSE');
                         """;
-                        print(query)
+                        # print(query)
                         con.execute(query)
                         con.commit()
+                else:
+                    print('found a done')
+                    content = item['content'].split("**")[1]
+                    author_username = item['mentions'][0]['username']
+                    author_discriminator = item['mentions'][0]['discriminator']
+                    timestamp = item['timestamp']
+                    message_id = item['id']
+                    channel_id = mjn_chan_id
+                    if 'attachments' in item and len(item['attachments']) > 0:
+                        attachment = item['attachments'][0]
+                        filename = attachment['filename']
+                        url = attachment['url']
+                        if '.png' in filename:
+                            render_id = filename.rstrip('.png').split('_')[-1]
+                            print(render_id)
+                            query = f"""
+                                INSERT OR IGNORE INTO endings (message_id, channel_id, content, author_username, author_discriminator, timestamp, render_id, filename, url)
+                                VALUES ('{message_id}', '{channel_id}', '{content}', '{author_username}', '{author_discriminator}', '{timestamp}', '{render_id}', '{filename}', '{url}');
+                            """;
+                            # print(query)
+                            con.execute(query)
+                            con.commit()
         # print(found)
         sleep(1)
     print('done')
