@@ -87,3 +87,7 @@ sqlite> select count() from beginnings; select count() from progressions; select
 # in an hour and 25 minutes it got this far that was awesome, i'll save it
 # to cap6
 
+# helpful command
+./find_new_renders.py -c 24 & ./find_new_renders.py -c 54 & ./find_new_renders.py -c 84 &
+# helpful command
+kill %1 %2 %3
