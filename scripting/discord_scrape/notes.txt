@@ -75,3 +75,15 @@ sqlite> select count() from beginnings; select count() from progressions; select
 # stream, but when we jump up to 3 channels and include upscalings and other
 # types we might get there (and we can code it to work for things with https
 # and apostophes
+
+
+# lets try a 1 hour capture with 3 channels finding renders
+# 1 tracker tracking renders
+# and 1 downloader downloading images
+# it should at most do 4 requets per second using my token, maybe even just 3
+# and the downloads are also going to my ip address but thats just one per
+# second
+# lets see how far it gets before i stop it
+# in an hour and 25 minutes it got this far that was awesome, i'll save it
+# to cap6
+

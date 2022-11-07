@@ -11,7 +11,7 @@ import subprocess
 def main():
     con = sqlite3.connect('local_state.db')
     cur = con.cursor()
-    for i in range(600):
+    for i in range(60*90):
         query = "select filename, url from endings WHERE is_downloaded = 'FALSE';"
         cur.execute(query)
         for filename, url in cur.fetchall():
