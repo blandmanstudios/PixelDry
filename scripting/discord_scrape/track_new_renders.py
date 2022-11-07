@@ -18,7 +18,8 @@ def main():
     }
     con = sqlite3.connect('local_state.db')
     cur = con.cursor()
-    for i in range(60*90):
+    speed_factor = 4
+    for i in range(60*90 * speed_factor):
         query = "SELECT * from beginnings WHERE processed = 'FALSE' AND num_tries < 100 ORDER BY num_tries ASC LIMIT 1"
         cur.execute(query)
         for beginning_id, channel_id, message_id, content, author_username, author_discriminator, timestamp, processed, num_tries in cur.fetchall():
@@ -55,7 +56,7 @@ def main():
             con.commit()
             sleep(0)
         print('waiting')
-        sleep(1.0)
+        sleep(1.0 / speed_factor)
     
     print('hi')
     return
