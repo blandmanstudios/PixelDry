@@ -9,3 +9,69 @@ python3 -m pip install requests
 # created an app in discord called watching-computers-draw
 
 python3 -m pip install pyyaml
+
+# find does a requets then sleeps for a seconds. It has an outer loop
+# the outer loop max is the max runtime, set this to 60 * 60 to run for an hour
+
+# track has an outer loop with a sleep for one second. while its waiting for
+# work to do. The actual work it does is on the inner loop where it will do a
+# requets at each work item it pops off the  list and its sleeps after each work
+# item
+# So what i want to do is give it a LIMIT 1 on the work items it grabs so it
+# only ever does one work item this will rate limit me to one request per second
+# and then i can set the outer loop as the max run time
+# but i dont love that cuz then i might fall behind and miss something if we're
+# rendering multiple images at the same time
+# i meant thats the case now cuz i have a rate limit in, so i might as well keep
+# it that way
+# i can add logic later for concurrency in a safe way
+
+# then download will check once per second if there is anything to download then
+# if there is it will try it all
+# so its loop time is its run time too
+
+# lets run them all for 200 seconds and see what happens
+# we should run for 200 seconds then they all stop
+# and we should be confident we're only gitting the discord api 3x per second
+
+rm local_state.db
+./find_new_renders.py
+./track_new_render.py
+./download_images.py
+
+# the 200 second test went well but i killed the results not sure why
+# i also learned i need to be able to handle content that has apostophes and
+# not have it break my sqlite
+
+# running a 60 second test now
+
+# use the following in a sqlite shell to track progress
+select count() from beginnings; select count() from progressions; select count() from endings;
+# it looks liek this
+sqlite> select count() from beginnings; select count() from progressions; select count() from endings;
+2
+4
+0
+
+
+# a 200 run looked like this
+sqlite> select count() from beginnings; select count() from progressions; select count() from endings;
+3
+14
+1
+# it got 1 full render, the other i think we missed the output cuz it fell out
+# of the top 10, i'll change that to top 50
+
+
+# i had a good 10 minute run 600 iterations (tho it took longer than 10 minutes)
+# and it reutrned this
+sqlite> select count() from beginnings; select count() from progressions; select count() from endings;
+15
+69
+9
+# so i can get 9 full images beging drawn which is probably about a minute
+# of content
+# so right now we dont have enough data coming in for a real time no repeats
+# stream, but when we jump up to 3 channels and include upscalings and other
+# types we might get there (and we can code it to work for things with https
+# and apostophes

@@ -27,14 +27,25 @@ def main():
     query_string = "CREATE TABLE IF NOT EXISTS progressions (progression_id INTEGER PRIMARY KEY, channel_id varchar(100), message_id varchar(100), content TEXT, author_username varchar(100), author_discriminator varchar(100), timestamp varchar(100), percentage varchar(100), render_id varchar(100), beginning_id INTEGER, filename text, url text, is_downloaded INTEGER, unique (message_id, channel_id, percentage), FOREIGN KEY(beginning_id) REFERENCES beginnings(beginning_id));"
     cur.execute(query_string)
     # found = []
-    for i in range(100):
-        resp = requests.get(f"{API_ENDPOINT}/channels/{mjn_chan_id}/messages?limit=10", headers=headers)
+    for i in range(600):
+        resp = requests.get(f"{API_ENDPOINT}/channels/{mjn_chan_id}/messages?limit=100", headers=headers)
         res = resp.json()
         json_formatted_str = json.dumps(res, indent=4)
         for item in res:
             if (type(item) is not dict):
                 continue
             if item['author']['username'] == 'Midjourney Bot':
+                if '**' not in item['content']:
+                    continue
+                if 'https' in item['content']:
+                    # midjourney wont proc things with broken links
+                    # but it will proc good links, i'll just skip this edge case
+                    # cuz i dont want to have to check if the job gets stuck
+                    # at 0%
+                    continue
+                if "'" in item['content']:
+                    # skip things containing commas cuz it breaks sql
+                    continue
                 status = item['content'].split(' ')[-2:-1][0]
                 print(status)
                 if 'rate' in status:

@@ -19,14 +19,16 @@ def main():
     mjn_chan_id = '989268312036896818'
     con = sqlite3.connect('local_state.db')
     cur = con.cursor()
-    for i in range(200):
-        query = "SELECT * from beginnings WHERE processed = 'FALSE' AND num_tries < 200"
+    for i in range(600):
+        query = "SELECT * from beginnings WHERE processed = 'FALSE' AND num_tries < 100 ORDER BY num_tries ASC LIMIT 1"
         cur.execute(query)
         for beginning_id, channel_id, message_id, content, author_username, author_discriminator, timestamp, processed, num_tries in cur.fetchall():
             resp = requests.get(f"{API_ENDPOINT}/channels/{mjn_chan_id}/messages?limit=1&around={message_id}", headers=headers)
             res = resp.json()
             json_formatted_str = json.dumps(res, indent=4)
             for item in res:
+                if '**' not in item['content']:
+                    continue
                 found_content = item['content'].split("**")[1]
                 found_timestamp = item['timestamp']
                 if found_content == content and found_timestamp == timestamp and 'attachments' in item and len(item['attachments']) > 0:
@@ -52,7 +54,7 @@ def main():
             query = f"UPDATE beginnings SET num_tries = '{num_tries + 1}' WHERE beginning_id = '{beginning_id}' AND processed='FALSE'"
             cur.execute(query)
             con.commit()
-            sleep(1.0)
+            sleep(0)
         print('waiting')
         sleep(1.0)
     
