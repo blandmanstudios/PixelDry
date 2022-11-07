@@ -65,8 +65,10 @@ def main():
             for item in progression_images:
                 shutil.copy(f'data/{item}', 'renders/%s/seq_image_%03d.webp' % (render_id, index))
                 index += 1
-                shutil.copy(f'data/{item}', 'renders/%s/seq_image_%03d.webp' % (render_id, index))
-                index += 1
+                if index <= 5:
+                    # stop doubling up when it stops changing so much
+                    shutil.copy(f'data/{item}', 'renders/%s/seq_image_%03d.webp' % (render_id, index))
+                    index += 1
             shutil.copy(f'data/{ending_image}', f'renders/%s/seq_image_%03d.png' % (render_id, index))
             proc = subprocess.Popen(["ffmpeg", "-y", "-i", "seq_image_%03d.png" % index, "-c:v", "libwebp", "seq_image_%03d.webp" % index], cwd=f"renders/{render_id}")
             proc.communicate()
@@ -75,11 +77,14 @@ def main():
             proc = subprocess.Popen(["ffmpeg", "-y", "-i", "seq_image_%03d.png" % index, "-c:v", "libwebp", "seq_image_%03d.webp" % index], cwd=f"renders/{render_id}")
             proc.communicate()
             index += 1
-            while index < 20:
+            while index < 19:
                 shutil.copy(f'renders/{render_id}/gen2_text.png', f'renders/%s/seq_image_%03d.png' % (render_id, index))
                 proc = subprocess.Popen(["ffmpeg", "-y", "-i", "seq_image_%03d.png" % index, "-c:v", "libwebp", "seq_image_%03d.webp" % index], cwd=f"renders/{render_id}")
                 proc.communicate()
                 index += 1
+            # final frame is black
+            shutil.copy(f'black_frame.webp', 'renders/%s/seq_image_%03d.webp' % (render_id, index))
+            index += 1
             cmd = " ".join(["ffmpeg", "-y", "-framerate", "1", "-pattern_type", "glob", "-i", "'*.webp'", "-c:v", "libx264", "-r", "30", "-pix_fmt", "yuv420p", f"output.mp4"])
             os.system(f"cd renders/{render_id}; {cmd}")
             print('done')
