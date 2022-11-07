@@ -1,0 +1,4 @@
+env/
+secure_params.yml
+data/*
+local_state.db
