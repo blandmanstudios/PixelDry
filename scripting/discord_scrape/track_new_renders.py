@@ -18,7 +18,7 @@ def main():
     }
     con = sqlite3.connect('local_state.db')
     cur = con.cursor()
-    for i in range(600):
+    for i in range(60*90):
         query = "SELECT * from beginnings WHERE processed = 'FALSE' AND num_tries < 100 ORDER BY num_tries ASC LIMIT 1"
         cur.execute(query)
         for beginning_id, channel_id, message_id, content, author_username, author_discriminator, timestamp, processed, num_tries in cur.fetchall():
@@ -36,15 +36,15 @@ def main():
                     filename = attachment['filename']
                     url = attachment['url']
                     render_id = filename.rstrip('.webp').split('_')[-1]
-                    percentage = filename.rstrip('.webp').split('_')[-2]
+                    percentage = int(filename.rstrip('.webp').split('_')[-2])
                     query = f"""
-                        SELECT * from progressions WHERE message_id = '{message_id}' AND channel_id = '{channel_id}' and percentage = '{percentage}'
+                        SELECT * from progressions WHERE message_id = '{message_id}' AND channel_id = '{channel_id}' and percentage = {percentage}
                     """;
                     # print(query)
                     if len(cur.execute(query).fetchall()) == 0:
                         query = f"""
                             INSERT OR IGNORE INTO progressions (message_id, channel_id, content, author_username, author_discriminator, timestamp, percentage, render_id, beginning_id, filename, url, is_downloaded)
-                            VALUES ('{message_id}', '{channel_id}', '{content}', '{author_username}', '{author_discriminator}', '{timestamp}', '{percentage}', '{render_id}', '{beginning_id}', '{filename}', '{url}', 'FALSE');
+                            VALUES ('{message_id}', '{channel_id}', '{content}', '{author_username}', '{author_discriminator}', '{timestamp}', {percentage}, '{render_id}', '{beginning_id}', '{filename}', '{url}', 'FALSE');
                         """;
                         # print(query)
                         cur.execute(query)
