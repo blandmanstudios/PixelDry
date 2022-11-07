@@ -38,7 +38,7 @@ def main():
             cur.execute(query)
             for prog_render_id, prog_filename in cur.fetchall():
                 progression_images.append(prog_filename)
-        if ending_image is not None and content is not None and len(progression_images) > 3 and len(progression_images) < 9:
+        if ending_image is not None and content is not None and len(progression_images) > 3 and len(progression_images) < 16:
             print('gonna proc')
             os.makedirs('renders', exist_ok=True)
             os.makedirs(f'renders/{render_id}', exist_ok=True)
@@ -72,7 +72,7 @@ def main():
             for item in progression_images:
                 shutil.copy(f'data/{item}', 'renders/%s/seq_image_%03d.webp' % (render_id, index))
                 index += 1
-                if index <= 5:
+                if index <= 5 and len(progression_images) < 10:
                     # stop doubling up when it stops changing so much
                     shutil.copy(f'data/{item}', 'renders/%s/seq_image_%03d.webp' % (render_id, index))
                     index += 1
@@ -105,6 +105,10 @@ def main():
             clip_con.commit()
             shutil.rmtree(f'renders/{render_id}')
         if render_id is not None:
+            if len(progression_images) <= 3:
+                print('not enough progressions logged! three steps would just be choppy')
+            if len(progression_images) >= 16:
+                print('too many progressions logged, i didnt plan for this')
             query = f"UPDATE endings SET is_clipped = 'TRUE' WHERE render_id = '{render_id}'"
             cur.execute(query)
             con.commit()
