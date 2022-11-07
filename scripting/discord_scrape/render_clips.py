@@ -15,6 +15,7 @@ import subprocess
 def main():
     con = sqlite3.connect('local_state.db')
     cur = con.cursor()
+    os.makedirs('clips', exist_ok=True)
     for i in range(60*60):
         ending_image = None
         content = None
@@ -82,6 +83,8 @@ def main():
             cmd = " ".join(["ffmpeg", "-y", "-framerate", "1", "-pattern_type", "glob", "-i", "'*.webp'", "-c:v", "libx264", "-r", "30", "-pix_fmt", "yuv420p", f"output.mp4"])
             os.system(f"cd renders/{render_id}; {cmd}")
             print('done')
+            shutil.move(f'renders/{render_id}/output.mp4', f'clips/{render_id}.mp4')
+            shutil.rmtree(f'renders/{render_id}')
         if render_id is not None:
             query = f"UPDATE endings SET is_clipped = 'TRUE' WHERE render_id = '{render_id}'"
             cur.execute(query)
