@@ -20,7 +20,7 @@ def main():
     query_string = "CREATE TABLE IF NOT EXISTS clips (clip_id INTEGER PRIMARY KEY, content TEXT, author_username varchar(100), author_discriminator varchar(100), timestamp varchar(100), render_id varchar(100), n_stitched INTEGER, unique (render_id));"
     clip_cur.execute(query_string)
     os.makedirs('clips', exist_ok=True)
-    for i in range(60*60):
+    for i in range(60*60*4):
         ending_image = None
         content = None
         render_id = None

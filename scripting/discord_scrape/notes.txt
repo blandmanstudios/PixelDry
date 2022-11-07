@@ -91,3 +91,12 @@ sqlite> select count() from beginnings; select count() from progressions; select
 ./find_new_renders.py -c 24 & ./find_new_renders.py -c 54 & ./find_new_renders.py -c 84 &
 # helpful command
 kill %1 %2 %3
+
+# letting it run for 4 hours, set each one to 60*60*4
+# not even going to reset it from running the hour ealier
+# it can just pickup where it left off (or give up on those)
+# it worked, i got like 78 minutes of content in those 4 hours
+# eventually mind find_new_renders threads died on your down cuz of a connection
+# error with name resolution, so i could fix that or i could not worry about it
+requests.exceptions.ConnectionError: HTTPSConnectionPool(host='discord.com', port=443): Max retries exceeded with url: /api/v10/channels/997271660900126801/messages?limit=100 (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x7fadffcaaa40>: Failed to establish a new connection: [Errno -3] Temporary failure in name resolution'))
+
