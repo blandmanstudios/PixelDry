@@ -16,14 +16,13 @@ def main():
     headers={
             'Authorization': f'{params["access_token"]}'
     }
-    mjn_chan_id = '989268312036896818'
     con = sqlite3.connect('local_state.db')
     cur = con.cursor()
     for i in range(600):
         query = "SELECT * from beginnings WHERE processed = 'FALSE' AND num_tries < 100 ORDER BY num_tries ASC LIMIT 1"
         cur.execute(query)
         for beginning_id, channel_id, message_id, content, author_username, author_discriminator, timestamp, processed, num_tries in cur.fetchall():
-            resp = requests.get(f"{API_ENDPOINT}/channels/{mjn_chan_id}/messages?limit=1&around={message_id}", headers=headers)
+            resp = requests.get(f"{API_ENDPOINT}/channels/{channel_id}/messages?limit=1&around={message_id}", headers=headers)
             res = resp.json()
             json_formatted_str = json.dumps(res, indent=4)
             for item in res:
