@@ -15,15 +15,22 @@ import subprocess
 def main():
     con = sqlite3.connect('local_state.db')
     cur = con.cursor()
+    clip_con = sqlite3.connect('clip_metadata.db')
+    clip_cur = clip_con.cursor()
+    query_string = "CREATE TABLE IF NOT EXISTS clips (clip_id INTEGER PRIMARY KEY, content TEXT, author_username varchar(100), author_discriminator varchar(100), timestamp varchar(100), render_id varchar(100), n_stitched INTEGER, unique (render_id));"
+    clip_cur.execute(query_string)
     os.makedirs('clips', exist_ok=True)
     for i in range(60*60):
         ending_image = None
         content = None
         render_id = None
+        timestamp = None
+        author_username = None
+        author_discriminator = None
         progression_images = []
-        query = "SELECT render_id, filename, content from endings WHERE is_clipped = 'FALSE' AND is_downloaded = 'TRUE' LIMIT 1"
+        query = "SELECT endings.render_id, endings.filename, endings.content, beginnings.timestamp, endings.author_username, endings.author_discriminator from endings JOIN beginnings on endings.beginning_id = beginnings.beginning_id WHERE endings.is_clipped = 'FALSE' AND endings.is_downloaded = 'TRUE' LIMIT 1"
         cur.execute(query)
-        for render_id, filename, content in cur.fetchall():
+        for render_id, filename, content, timestamp, author_username, author_discriminator in cur.fetchall():
             print(render_id)
             print(filename)
             ending_image = filename
@@ -89,6 +96,13 @@ def main():
             os.system(f"cd renders/{render_id}; {cmd}")
             print('done')
             shutil.move(f'renders/{render_id}/output.mp4', f'clips/{render_id}.mp4')
+            query = f"""
+                INSERT OR IGNORE INTO clips (content, author_username, author_discriminator, timestamp, render_id, n_stitched)
+                VALUES ('{content}', '{author_username}', '{author_discriminator}', '{timestamp}', '{render_id}', 0);
+            """;
+            # print(query)
+            clip_con.execute(query)
+            clip_con.commit()
             shutil.rmtree(f'renders/{render_id}')
         if render_id is not None:
             query = f"UPDATE endings SET is_clipped = 'TRUE' WHERE render_id = '{render_id}'"
