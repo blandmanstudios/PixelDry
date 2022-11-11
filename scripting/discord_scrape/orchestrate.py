@@ -28,9 +28,12 @@ def main():
                     action='store_true')
     parser.add_argument('-s', '--stream_only',
                     action='store_true')
+    parser.add_argument('-d', '--disable_clipping',
+                    action='store_true')
     args = parser.parse_args()
     query_only = args.query_only
     stream_only = args.stream_only
+    disable_clipping = args.disable_clipping
     begin = datetime.utcnow()
 
     commands = dict(
@@ -41,6 +44,8 @@ def main():
         down1={'cmd': ["./download_images.py", "-i","-1"], 'cwd': "."},
         render1={'cmd': ["./render_clips.py", "-i","-1"], 'cwd': "."},
     )
+    if disable_clipping:
+        del commands["render1"]
     if not stream_only:
         for key in commands:
             commands[key]["proc"] = subprocess.Popen(commands[key]["cmd"], cwd=commands[key]["cwd"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
