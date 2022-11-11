@@ -120,3 +120,20 @@ database of clips for when there are lulls in my livestream
 
 Also, today I learned i've got to be on a wired connection if i'm going to
 download images and upload a stream at the same time
+
+
+I'm going to run
+./orchestrate.py --query_only
+And let it run for along time, and see if it collects a good buffer of stuff
+  i can fallback on
+Then, in the morning i can see how it ran, and i can run an orchestrate that
+  streams and queries
+
+It looks like it ran all night, the pids look differente so it looks like it
+  did restart things in the middle of the night at least once, but i got a
+  good buffer of images (1853 clips)
+So this morning just before 12:06pm on November 11th, i started a
+  ./orchestrate --stream_only and I'm going to let them run together and see
+  if its successfull for 4+ hours and if there are any failures and if its
+  good to go for a consistent number of time, I'll lauch it publicly tonight
+
