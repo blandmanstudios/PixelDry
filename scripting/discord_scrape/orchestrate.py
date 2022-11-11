@@ -63,16 +63,16 @@ def main():
         diff = loop_now - prev_time
         diff_seconds = diff.total_seconds()
         if diff_seconds > HOUR_STEP and not stream_only:
-            print('an hour passed, rerunning scripts that died')
+            # print('an hour passed, rerunning scripts that died')
             for key in commands:
                 if(commands[key]["proc"].poll() is not None):
                     print(f'{key} died, restarting')
                     commands[key]["proc"] = subprocess.Popen(commands[key]["cmd"], cwd=commands[key]["cwd"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            print(f'{(loop_now - begin).total_seconds()} seconds passed')
+            # print(f'{(loop_now - begin).total_seconds()} seconds passed')
             prev_time += timedelta(seconds=HOUR_STEP)
         stream_diff_seconds = (loop_now - stream_prev_time).total_seconds()
         if stream_diff_seconds > STREAM_STEP and not query_only:
-            print('stream step passed checking to see if stream died')
+            # print('stream step passed checking to see if stream died')
             if arrange["proc"].poll() is not None or ffmpeg["proc"].poll() is not None:
                 print('either the stream or the arrangement died, restart both')
                 if arrange["proc"].poll() is None:
@@ -93,7 +93,7 @@ def main():
                 print('starting stream')
                 ffmpeg["proc"] = subprocess.Popen(ffmpeg["cmd"], cwd=ffmpeg["cwd"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                 print(ffmpeg["proc"].poll())
-            print(f'{(loop_now - begin).total_seconds()} seconds passed')
+            # print(f'{(loop_now - begin).total_seconds()} seconds passed')
             stream_prev_time += timedelta(seconds=STREAM_STEP)
 
 
