@@ -14,9 +14,9 @@ from datetime import datetime
 from datetime import timedelta
 
 TIME_STEP = 20
-N_FILES = 10
-N_LEAD_CLIPS = 3
-RUN_LOOP_LENGTH = 400
+N_FILES = 100
+N_LEAD_CLIPS = 20
+RUN_LOOP_LENGTH = 60*60*4
 
 def main():
     clip_con = sqlite3.connect('clip_metadata.db.test')
@@ -35,9 +35,11 @@ def main():
     prev_time = begin
     i = 0
     while i < RUN_LOOP_LENGTH:
-        diff = datetime.utcnow() - prev_time
+        loop_now = datetime.utcnow()
+        diff = loop_now - prev_time
         diff_seconds = diff.total_seconds()
         if diff_seconds > TIME_STEP:
+            print((loop_now - begin).total_seconds())
             next_clip_fname = get_next_clip_fname(clip_con, clip_cur)
             shutil.copyfile(next_clip_fname, 'loop_dir/vid%04d.mp4' % (index % N_FILES))
             index += 1
