@@ -100,3 +100,23 @@ kill %1 %2 %3
 # error with name resolution, so i could fix that or i could not worry about it
 requests.exceptions.ConnectionError: HTTPSConnectionPool(host='discord.com', port=443): Max retries exceeded with url: /api/v10/channels/997271660900126801/messages?limit=100 (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x7fadffcaaa40>: Failed to establish a new connection: [Errno -3] Temporary failure in name resolution'))
 
+
+
+Running a long test, on youtube unlisted, potentially overnight
+Move state before to save_point3 so we know where we started
+- we have secure params
+- we have a clips_metadata.db with a library of clips all with zero playtime
+- we have those clips saved in clips/
+- we have nothing saved in data/ (it just has a .gitkeep file)
+- we have no local_state.db database
+Start a stream using youtube. Normal latency, enable DVR, default stream key
+(RTMP, Variable), added delay = None
+Run the following script on my desktop PC
+./orchestrate.py
+Looks to be working, but i just found that the bot has been intermittent today
+(for the last 10 hours) so it looks like people arent actively using it
+Maybe its time for me to just work in scrape only mode and build up a bigger
+database of clips for when there are lulls in my livestream
+
+Also, today I learned i've got to be on a wired connection if i'm going to
+download images and upload a stream at the same time
