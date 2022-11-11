@@ -24,7 +24,10 @@ def main():
                         type=int,
                         default=-1,
                         help='number of loop iterations, -1 for infinite')
+    parser.add_argument('-s', '--scrape_only',
+                    action='store_true')
     args = parser.parse_args()
+    scrape_only = args.scrape_only
     begin = datetime.utcnow()
 
     commands = dict(
@@ -38,13 +41,14 @@ def main():
     for key in commands:
         commands[key]["proc"] = subprocess.Popen(commands[key]["cmd"], cwd=commands[key]["cwd"], stdout=subprocess.DEVNULL)
         print(commands[key]["proc"].poll())
-    arrange={'cmd': ["./arrange_clips.py", "-i","-1"], 'cwd': "."}
-    arrange["proc"] = subprocess.Popen(arrange["cmd"], cwd=arrange["cwd"], stdout=subprocess.DEVNULL)
-    print(arrange["proc"].poll())
-    sleep(3)
-    ffmpeg={'cmd': ["ffmpeg", "-re", "-stream_loop", "-1", "-f", "concat", "-safe", "0", "-i", "video_list.txt", "-stream_loop", "-1", "-f", "concat", "-safe", "0", "-i", "audio_list.txt", "-map", "0:v", "-map", "1:a", "-c:v", "libx264", "-x264-params", "keyint=10:scenecut=0", "-shortest", "-qscale", "0", "-g", "1", "-f", "flv", "-c", "copy", f"rtmp://{stream_url}/{stream_key}"], 'cwd': "loop_dir"}
-    ffmpeg["proc"] = subprocess.Popen(ffmpeg["cmd"], cwd=ffmpeg["cwd"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    print(ffmpeg["proc"].poll())
+    if not scrape_only:
+        arrange={'cmd': ["./arrange_clips.py", "-i","-1"], 'cwd': "."}
+        arrange["proc"] = subprocess.Popen(arrange["cmd"], cwd=arrange["cwd"], stdout=subprocess.DEVNULL)
+        print(arrange["proc"].poll())
+        sleep(3)
+        ffmpeg={'cmd': ["ffmpeg", "-re", "-stream_loop", "-1", "-f", "concat", "-safe", "0", "-i", "video_list.txt", "-stream_loop", "-1", "-f", "concat", "-safe", "0", "-i", "audio_list.txt", "-map", "0:v", "-map", "1:a", "-c:v", "libx264", "-x264-params", "keyint=10:scenecut=0", "-shortest", "-qscale", "0", "-g", "1", "-f", "flv", "-c", "copy", f"rtmp://{stream_url}/{stream_key}"], 'cwd': "loop_dir"}
+        ffmpeg["proc"] = subprocess.Popen(ffmpeg["cmd"], cwd=ffmpeg["cwd"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        print(ffmpeg["proc"].poll())
 
 
     prev_time = begin
@@ -63,30 +67,31 @@ def main():
             print(f'{(loop_now - begin).total_seconds()} seconds passed')
             prev_time += timedelta(seconds=HOUR_STEP)
         stream_diff_seconds = (loop_now - stream_prev_time).total_seconds()
-        if stream_diff_seconds > STREAM_STEP:
-            print('stream step passed checking to see if stream died')
-            if arrange["proc"].poll() is not None or ffmpeg["proc"].poll() is not None:
-                print('either the stream or the arrangement died, restart both')
-                if arrange["proc"].poll() is None:
-                    print('killing arrangement')
-                    arrange["proc"].kill()
-                else:
-                    print('arrangement is dead')
-                if ffmpeg["proc"].poll() is None:
-                    print('killing stream')
-                    ffmpeg["proc"].kill()
-                else:
-                    print('stream is dead')
-                print('starting arrangement')
-                arrange["proc"] = subprocess.Popen(arrange["cmd"], cwd=arrange["cwd"], stdout=subprocess.DEVNULL)
-                print(arrange["proc"].poll())
-                print('sleep 3')
-                sleep(3)
-                print('starting stream')
-                ffmpeg["proc"] = subprocess.Popen(ffmpeg["cmd"], cwd=ffmpeg["cwd"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-                print(ffmpeg["proc"].poll())
-            print(f'{(loop_now - begin).total_seconds()} seconds passed')
-            stream_prev_time += timedelta(seconds=STREAM_STEP)
+        if not scrape_only:
+            if stream_diff_seconds > STREAM_STEP:
+                print('stream step passed checking to see if stream died')
+                if arrange["proc"].poll() is not None or ffmpeg["proc"].poll() is not None:
+                    print('either the stream or the arrangement died, restart both')
+                    if arrange["proc"].poll() is None:
+                        print('killing arrangement')
+                        arrange["proc"].kill()
+                    else:
+                        print('arrangement is dead')
+                    if ffmpeg["proc"].poll() is None:
+                        print('killing stream')
+                        ffmpeg["proc"].kill()
+                    else:
+                        print('stream is dead')
+                    print('starting arrangement')
+                    arrange["proc"] = subprocess.Popen(arrange["cmd"], cwd=arrange["cwd"], stdout=subprocess.DEVNULL)
+                    print(arrange["proc"].poll())
+                    print('sleep 3')
+                    sleep(3)
+                    print('starting stream')
+                    ffmpeg["proc"] = subprocess.Popen(ffmpeg["cmd"], cwd=ffmpeg["cwd"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                    print(ffmpeg["proc"].poll())
+                print(f'{(loop_now - begin).total_seconds()} seconds passed')
+                stream_prev_time += timedelta(seconds=STREAM_STEP)
 
 
         print(f'loop_count {i}')
