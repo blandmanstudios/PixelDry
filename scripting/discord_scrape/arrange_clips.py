@@ -28,7 +28,7 @@ def main():
     args = parser.parse_args()
     con = sqlite3.connect('local_state.db')
     cur = con.cursor()
-    clip_con = sqlite3.connect('clip_metadata.db.test')
+    clip_con = sqlite3.connect('clip_metadata.db')
     clip_cur = clip_con.cursor()
     query_string = "CREATE TABLE IF NOT EXISTS clips (clip_id INTEGER PRIMARY KEY, content TEXT, author_username varchar(100), author_discriminator varchar(100), timestamp varchar(100), render_id varchar(100), n_stitched INTEGER, unique (render_id));"
     clip_cur.execute(query_string)
