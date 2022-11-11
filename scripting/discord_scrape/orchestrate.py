@@ -28,6 +28,7 @@ def main():
         find3={'cmd': ["./find_new_renders.py", "-c", "84", "-i","10"], 'cwd': "."},
         track1={'cmd': ["./track_new_renders.py", "-i","40"], 'cwd': "."},
         down1={'cmd': ["./download_images.py", "-i","10"], 'cwd': "."},
+        render1={'cmd': ["./render_clips.py", "-i","10"], 'cwd': "."},
     )
     for key in commands:
         commands[key]["proc"] = subprocess.Popen(commands[key]["cmd"], cwd=commands[key]["cwd"], stdout=subprocess.DEVNULL)
