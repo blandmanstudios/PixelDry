@@ -6,12 +6,21 @@ import json
 from time import sleep
 import sqlite3
 import subprocess
+import argparse
 
 
 def main():
+    parser = argparse.ArgumentParser(prog='myprogram')
+    parser.add_argument('--iterations',
+                        '-i',
+                        type=int,
+                        default=-1,
+                        help='number of loop iterations, -1 for infinite')
+    args = parser.parse_args()
     con = sqlite3.connect('local_state.db')
     cur = con.cursor()
-    for i in range(60*60 * 4):
+    i = 0
+    while args.iterations < 0 or i < args.iterations:
         query = "select filename, url from endings WHERE is_downloaded = 'FALSE';"
         cur.execute(query)
         for filename, url in cur.fetchall():
@@ -32,6 +41,7 @@ def main():
             con.commit()
         print('waiting for new images')
         sleep(1)
+        i += 1
 
     return
 

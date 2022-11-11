@@ -12,13 +12,22 @@ import textwrap
 import subprocess
 from datetime import datetime
 from datetime import timedelta
+import argparse
 
 TIME_STEP = 20
 N_FILES = 100
 N_LEAD_CLIPS = 20
-RUN_LOOP_LENGTH = 60*60*4
 
 def main():
+    parser = argparse.ArgumentParser(prog='myprogram')
+    parser.add_argument('--iterations',
+                        '-i',
+                        type=int,
+                        default=-1,
+                        help='number of loop iterations, -1 for infinite')
+    args = parser.parse_args()
+    con = sqlite3.connect('local_state.db')
+    cur = con.cursor()
     clip_con = sqlite3.connect('clip_metadata.db.test')
     clip_cur = clip_con.cursor()
     query_string = "CREATE TABLE IF NOT EXISTS clips (clip_id INTEGER PRIMARY KEY, content TEXT, author_username varchar(100), author_discriminator varchar(100), timestamp varchar(100), render_id varchar(100), n_stitched INTEGER, unique (render_id));"
@@ -34,7 +43,7 @@ def main():
     begin = datetime.utcnow()
     prev_time = begin
     i = 0
-    while i < RUN_LOOP_LENGTH:
+    while args.iterations < 0 or i < args.iterations:
         loop_now = datetime.utcnow()
         diff = loop_now - prev_time
         diff_seconds = diff.total_seconds()
@@ -46,8 +55,8 @@ def main():
             print(True)
             prev_time += timedelta(seconds=TIME_STEP)
         print(i)
-        i += 1
         sleep(1)
+        i += 1
     return
 
 

@@ -23,6 +23,11 @@ def main():
                         type=int,
                         default=24,
                         help='newbie discord channel to crawl')
+    parser.add_argument('--iterations',
+                        '-i',
+                        type=int,
+                        default=-1,
+                        help='number of loop iterations, -1 for infinite')
     args = parser.parse_args()
     chan_id_map = dict()
     chan_id_map[24] = '989268312036896818'
@@ -39,7 +44,8 @@ def main():
     query_string = "CREATE TABLE IF NOT EXISTS progressions (progression_id INTEGER PRIMARY KEY, channel_id varchar(100), message_id varchar(100), content TEXT, author_username varchar(100), author_discriminator varchar(100), timestamp varchar(100), percentage int, render_id varchar(100), beginning_id INTEGER, filename text, url text, is_downloaded INTEGER, unique (message_id, channel_id, percentage), FOREIGN KEY(beginning_id) REFERENCES beginnings(beginning_id));"
     cur.execute(query_string)
     # found = []
-    for i in range(60*60*4):
+    i = 0
+    while args.iterations < 0 or i < args.iterations:
         resp = requests.get(f"{API_ENDPOINT}/channels/{mjn_chan_id}/messages?limit=100", headers=headers)
         res = resp.json()
         json_formatted_str = json.dumps(res, indent=4)
@@ -117,6 +123,7 @@ def main():
                                 con.execute(query)
                                 con.commit()
         # print(found)
+        i += 1
         sleep(1)
     print('done')
     return

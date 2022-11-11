@@ -10,9 +10,19 @@ import shutil
 from PIL import Image, ImageDraw, ImageFont
 import textwrap
 import subprocess
+import argparse
 
 
 def main():
+    parser = argparse.ArgumentParser(prog='myprogram')
+    parser.add_argument('--iterations',
+                        '-i',
+                        type=int,
+                        default=-1,
+                        help='number of loop iterations, -1 for infinite')
+    args = parser.parse_args()
+    con = sqlite3.connect('local_state.db')
+    cur = con.cursor()
     con = sqlite3.connect('local_state.db')
     cur = con.cursor()
     clip_con = sqlite3.connect('clip_metadata.db')
@@ -20,7 +30,8 @@ def main():
     query_string = "CREATE TABLE IF NOT EXISTS clips (clip_id INTEGER PRIMARY KEY, content TEXT, author_username varchar(100), author_discriminator varchar(100), timestamp varchar(100), render_id varchar(100), n_stitched INTEGER, unique (render_id));"
     clip_cur.execute(query_string)
     os.makedirs('clips', exist_ok=True)
-    for i in range(60*60*4):
+    i = 0
+    while args.iterations < 0 or i < args.iterations:
         ending_image = None
         content = None
         render_id = None
@@ -114,7 +125,7 @@ def main():
             con.commit()
         print('waiting')
         sleep(1)
-
+        i += 1
 
         
                 
