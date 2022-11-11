@@ -137,3 +137,24 @@ So this morning just before 12:06pm on November 11th, i started a
   if its successfull for 4+ hours and if there are any failures and if its
   good to go for a consistent number of time, I'll lauch it publicly tonight
 
+Darn the stream broke 34 minutes in and started showing semi-gray frames
+  sometimes, not a coincidence that this is just after the loop happened
+  and it got ~100 clips in
+  Seems to sometimes normal out then i get a funny clip again 
+  It seems like its normaled out now that we're 30 minutes into the stream maybe
+  nope it hasn't
+  I wonder if it comes from the resolution changing from what it was last time
+    ffmpeg sent out this clip....
+  Yes! it is the ones with non-traditional resolution! it must be that its
+    changing what ffmpeg remembered about that clip last time, i gott a reformat
+    all my clips to be the same resolution (and while I'm at it I'll reformat
+    them to be 1920x1080 so i have a high res stream when posible)
+    And while i'm working on that fixing the images can be done with the same
+      workflow
+
+Next TODOs are
+- Make all clips 1920x1080 (scale up, scale down, and add back border)
+- Make text bold
+- Make the text and the box fill the width of the image always
+- Caution: i only have 60G of of space left and this project is already taking
+  5G so i might have to clean off space or prep to move
