@@ -59,6 +59,7 @@ def main():
             i1 = ImageDraw.Draw(img)
             myFont = ImageFont.truetype('FreeMonoBold.ttf', 20)
             img_width_px, img_height_px = img.size
+
             text_width_px = img.size[0] - 10
             shadow_overlay = Image.new('RGBA', img2.size, (255, 255, 255, 0))
             text_overlay = Image.new('RGBA', img2.size, (255, 255, 255, 0))
@@ -79,34 +80,40 @@ def main():
             img.save(f'renders/{render_id}/gen1_text.png')
             out = Image.alpha_composite(img2, shadow_overlay)
             out = Image.alpha_composite(out, text_overlay)
+            out = resize_to_aspect(out, 1920, 1080)
             out.save(f'renders/{render_id}/gen2_text.png')
             print(ending_image)
             print(progression_images)
             index = 0
             for item in progression_images:
                 shutil.copy(f'data/{item}', 'renders/%s/seq_image_%03d.webp' % (render_id, index))
+                resize_file_in_place('renders/%s/seq_image_%03d.webp' % (render_id, index), 1920, 1080)
                 index += 1
                 if index <= 5 and len(progression_images) < 10:
                     # stop doubling up when it stops changing so much
                     shutil.copy(f'data/{item}', 'renders/%s/seq_image_%03d.webp' % (render_id, index))
+                    resize_file_in_place('renders/%s/seq_image_%03d.webp' % (render_id, index), 1920, 1080)
                     index += 1
             shutil.copy(f'data/{ending_image}', f'renders/%s/seq_image_%03d.png' % (render_id, index))
             proc = subprocess.Popen(["ffmpeg", "-y", "-i", "seq_image_%03d.png" % index, "-c:v", "libwebp", "seq_image_%03d.webp" % index], cwd=f"renders/{render_id}")
             proc.communicate()
+            resize_file_in_place('renders/%s/seq_image_%03d.webp' % (render_id, index), 1920, 1080)
             index += 1
             shutil.copy(f'data/{ending_image}', f'renders/%s/seq_image_%03d.png' % (render_id, index))
             proc = subprocess.Popen(["ffmpeg", "-y", "-i", "seq_image_%03d.png" % index, "-c:v", "libwebp", "seq_image_%03d.webp" % index], cwd=f"renders/{render_id}")
             proc.communicate()
+            resize_file_in_place('renders/%s/seq_image_%03d.webp' % (render_id, index), 1920, 1080)
             index += 1
             while index < 19:
                 shutil.copy(f'renders/{render_id}/gen2_text.png', f'renders/%s/seq_image_%03d.png' % (render_id, index))
                 proc = subprocess.Popen(["ffmpeg", "-y", "-i", "seq_image_%03d.png" % index, "-c:v", "libwebp", "seq_image_%03d.webp" % index], cwd=f"renders/{render_id}")
+                # resize_file_in_place('renders/%s/seq_image_%03d.webp' % (render_id, index), 1920, 1080)
                 proc.communicate()
                 index += 1
             # final frame is black
             shutil.copy(f'black_frame.webp', 'renders/%s/seq_image_%03d.webp' % (render_id, index))
             index += 1
-            cmd = " ".join(["ffmpeg", "-y", "-framerate", "1", "-pattern_type", "glob", "-i", "'*.webp'", "-c:v", "libx264", "-r", "30", "-pix_fmt", "yuv420p", f"output.mp4"])
+            cmd = " ".join(["ffmpeg", "-y", "-framerate", "1", "-pattern_type", "glob", "-i", "'*.webp'", "-c:v", "libx264", "-r", "30", "-pix_fmt", "yuv420p", "-vf", "scale=1920:1080", "-preset", "slow", "-crf", "18", f"output.mp4"])
             os.system(f"cd renders/{render_id}; {cmd}")
             print('done')
             shutil.move(f'renders/{render_id}/output.mp4', f'clips/{render_id}.mp4')
@@ -134,6 +141,39 @@ def main():
                 
     print('done')
     return
+
+def resize_file_in_place(fname, desired_width_px, desired_height_px):
+    im = Image.open(fname)
+    im = resize_to_aspect(im, desired_width_px, desired_height_px)
+    im.save(fname)
+
+def resize_to_aspect(in_img, desired_width_px, desired_height_px):
+    img_width_px, img_height_px = in_img.size
+    aspect = img_width_px / img_height_px
+    print(aspect)
+    desired_aspect = desired_width_px / desired_height_px
+    print(desired_aspect)
+    if aspect == desired_aspect:
+        print('no-resize-needed')
+        return in_img
+    elif aspect < desired_aspect:
+        print('add to the sides')
+        new_width = math.floor(img_width_px * (desired_width_px / desired_height_px) / (img_width_px / img_height_px))
+        diff = new_width - img_width_px
+        padded = Image.new(in_img.mode, (new_width, img_height_px), (0,0,0))
+        padded.paste(in_img, (math.floor(diff / 2), 0))
+        print(new_width)
+        # padded.save(f'renders/{render_id}/gen3_padded.png')
+        return padded
+    else:
+        print('add to the top')
+        new_height = math.floor(img_height_px / (desired_width_px / desired_height_px) * (img_width_px / img_height_px))
+        diff = new_height - img_height_px
+        padded = Image.new(in_img.mode, (img_width_px, new_height), (0,0,0))
+        padded.paste(in_img, (0, math.floor(diff / 2)))
+        print(new_height)
+        # padded.save(f'renders/{render_id}/gen3_padded.png')
+        return padded
 
 
 if __name__ == '__main__':
