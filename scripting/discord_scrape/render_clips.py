@@ -56,7 +56,7 @@ def main():
             img = Image.open(f'data/{ending_image}')
             img2 = Image.open(f'data/{ending_image}').convert('RGBA')
             i1 = ImageDraw.Draw(img)
-            myFont = ImageFont.truetype('FreeMono.ttf', 20)
+            myFont = ImageFont.truetype('FreeMonoBold.ttf', 20)
             print(len(content))
             i1.text((10, 10), content, font=myFont, fill=(255, 0, 0))
             i1.rectangle((10, 10, 512, 50), fill=(0,255,0, 10))
