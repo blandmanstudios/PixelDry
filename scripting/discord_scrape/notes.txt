@@ -153,8 +153,8 @@ Darn the stream broke 34 minutes in and started showing semi-gray frames
       workflow
 
 Next TODOs are
-- Make all clips 1920x1080 (scale up, scale down, and add back border)
-- Make text bold
-- Make the text and the box fill the width of the image always
+- The clip renderer should get a better query so it renders by timestamp so
+  in the case where it falls behind (or if i gave it a big backlog to process)
+  it will prioritize the late jobs (so those get put on the stream faster)
 - Caution: i only have 60G of of space left and this project is already taking
   5G so i might have to clean off space or prep to move
