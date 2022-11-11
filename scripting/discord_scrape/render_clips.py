@@ -11,6 +11,7 @@ from PIL import Image, ImageDraw, ImageFont
 import textwrap
 import subprocess
 import argparse
+import math
 
 
 def main():
@@ -57,9 +58,8 @@ def main():
             img2 = Image.open(f'data/{ending_image}').convert('RGBA')
             i1 = ImageDraw.Draw(img)
             myFont = ImageFont.truetype('FreeMonoBold.ttf', 20)
-            print(len(content))
-            i1.text((10, 10), content, font=myFont, fill=(255, 0, 0))
-            i1.rectangle((10, 10, 512, 50), fill=(0,255,0, 10))
+            img_width_px, img_height_px = img.size
+            text_width_px = img.size[0] - 10
             shadow_overlay = Image.new('RGBA', img2.size, (255, 255, 255, 0))
             text_overlay = Image.new('RGBA', img2.size, (255, 255, 255, 0))
             text_i3 = ImageDraw.Draw(text_overlay)
@@ -67,12 +67,15 @@ def main():
             # text_i3.text((10, 10), content, font=myFont, fill=(255, 0, 0, 255))
             margin = offset = 10
             num_lines = 0
-            for line in textwrap.wrap(content, width=40):
+            char_width_px, char_height_px = myFont.getsize("0")
+            max_line_length = math.floor((img_width_px - 10 - 10) / char_width_px)
+            for line in textwrap.wrap(content, width=max_line_length):
                 text_i3.text((margin, offset), line, font=myFont, fill="#000000")
-                offset += myFont.getsize(line)[1]
+                # offset += myFont.getsize(line)[1]
+                offset += char_height_px
                 num_lines += 1
             print(num_lines)
-            shadow_i3.rectangle((10, 10, 502, 10 + (num_lines * myFont.getsize(line)[1])), fill=(255,255,255, 100))
+            shadow_i3.rectangle((10, 10, img_width_px - 10, 10 + (num_lines * myFont.getsize(line)[1])), fill=(255,255,255, 100))
             img.save(f'renders/{render_id}/gen1_text.png')
             out = Image.alpha_composite(img2, shadow_overlay)
             out = Image.alpha_composite(out, text_overlay)
