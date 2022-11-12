@@ -21,7 +21,10 @@ def main():
                         type=int,
                         default=-1,
                         help='number of loop iterations, -1 for infinite')
+    parser.add_argument('-f', '--fallback_watermark',
+                    action='store_true')
     args = parser.parse_args()
+    fallback_watermark = args.fallback_watermark
     con = sqlite3.connect('local_state.db')
     cur = con.cursor()
     con = sqlite3.connect('local_state.db')
@@ -88,30 +91,37 @@ def main():
             for item in progression_images:
                 shutil.copy(f'data/{item}', 'renders/%s/seq_image_%03d.webp' % (render_id, index))
                 resize_file_in_place('renders/%s/seq_image_%03d.webp' % (render_id, index), 1920, 1080)
+                conditionally_watermark_inplace('renders/%s/seq_image_%03d.webp' % (render_id, index), fallback_watermark)
                 index += 1
                 if index <= 5 and len(progression_images) < 10:
                     # stop doubling up when it stops changing so much
                     shutil.copy(f'data/{item}', 'renders/%s/seq_image_%03d.webp' % (render_id, index))
                     resize_file_in_place('renders/%s/seq_image_%03d.webp' % (render_id, index), 1920, 1080)
+                    conditionally_watermark_inplace('renders/%s/seq_image_%03d.webp' % (render_id, index), fallback_watermark)
                     index += 1
             shutil.copy(f'data/{ending_image}', f'renders/%s/seq_image_%03d.png' % (render_id, index))
             proc = subprocess.Popen(["ffmpeg", "-y", "-i", "seq_image_%03d.png" % index, "-c:v", "libwebp", "seq_image_%03d.webp" % index], cwd=f"renders/{render_id}")
             proc.communicate()
             resize_file_in_place('renders/%s/seq_image_%03d.webp' % (render_id, index), 1920, 1080)
+            conditionally_watermark_inplace('renders/%s/seq_image_%03d.webp' % (render_id, index), fallback_watermark)
             index += 1
             shutil.copy(f'data/{ending_image}', f'renders/%s/seq_image_%03d.png' % (render_id, index))
             proc = subprocess.Popen(["ffmpeg", "-y", "-i", "seq_image_%03d.png" % index, "-c:v", "libwebp", "seq_image_%03d.webp" % index], cwd=f"renders/{render_id}")
             proc.communicate()
             resize_file_in_place('renders/%s/seq_image_%03d.webp' % (render_id, index), 1920, 1080)
+            conditionally_watermark_inplace('renders/%s/seq_image_%03d.webp' % (render_id, index), fallback_watermark)
             index += 1
             while index < 19:
                 shutil.copy(f'renders/{render_id}/gen2_text.png', f'renders/%s/seq_image_%03d.png' % (render_id, index))
                 proc = subprocess.Popen(["ffmpeg", "-y", "-i", "seq_image_%03d.png" % index, "-c:v", "libwebp", "seq_image_%03d.webp" % index], cwd=f"renders/{render_id}")
                 # resize_file_in_place('renders/%s/seq_image_%03d.webp' % (render_id, index), 1920, 1080)
                 proc.communicate()
+                conditionally_watermark_inplace('renders/%s/seq_image_%03d.webp' % (render_id, index), fallback_watermark)
                 index += 1
             # final frame is black
             shutil.copy(f'black_frame.webp', 'renders/%s/seq_image_%03d.webp' % (render_id, index))
+            resize_file_in_place('renders/%s/seq_image_%03d.webp' % (render_id, index), 1920, 1080)
+            conditionally_watermark_inplace('renders/%s/seq_image_%03d.webp' % (render_id, index), fallback_watermark)
             index += 1
             cmd = " ".join(["ffmpeg", "-y", "-framerate", "1", "-pattern_type", "glob", "-i", "'*.webp'", "-c:v", "libx264", "-r", "30", "-pix_fmt", "yuv420p", "-vf", "scale=1920:1080", "-preset", "slow", "-crf", "18", f"output.mp4"])
             os.system(f"cd renders/{render_id}; {cmd}")
@@ -141,6 +151,18 @@ def main():
                 
     print('done')
     return
+
+
+def conditionally_watermark_inplace(fname, should_watermark):
+    if should_watermark:
+        im = Image.open(fname).convert('RGBA')
+        myFont = ImageFont.truetype('FreeMono.ttf', 12)
+        char_width_px, char_height_px = myFont.getsize("0")
+        text_overlay = Image.new('RGBA', im.size, (255, 255, 255, 0))
+        text_i3 = ImageDraw.Draw(text_overlay)
+        text_i3.text((0, im.size[1] - (1 * char_height_px)), "fallback stream", font=myFont, fill="#ffffff")
+        im = Image.alpha_composite(im, text_overlay)
+        im.save(fname)
 
 def resize_file_in_place(fname, desired_width_px, desired_height_px):
     im = Image.open(fname)
