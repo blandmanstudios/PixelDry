@@ -158,3 +158,32 @@ Next TODOs are
   it will prioritize the late jobs (so those get put on the stream faster)
 - Caution: i only have 60G of of space left and this project is already taking
   5G so i might have to clean off space or prep to move
+
+
+Launching a potentially live stream 11/11 and 11:12PM
+
+mkdir save_point8_launching_potentially_live_stream
+cp clip_metadata.db save_point8_before_launching_potentially_live_stream/
+cp local_state.db save_point8_before_launching_potentially_live_stream/
+cp -r data save_point8_before_launching_potentially_live_stream/
+cp -r clips save_point8_before_launching_potentially_live_stream/
+then starting the stream on youtube
+then running the following two commands in seperate terminals
+./orchestrate.py --query_only >> orchestrate_query.log
+./orchestrate.py --stream_only >> orchestrate_stream.log
+
+There was one blip where the stream restarted in less than 30
+  seconds, i happened to be watching at the time and it wasnt
+  super disruptive
+Sometime during the second hour one of the find scripts died
+  and so did the track script. I have 20ish minutes left till
+  it gets to a restart interval. I'm going to make sure it can
+  restart those before I make the stream public. But once that
+  works I can let this run knowing it will likely be able to
+  go for many hours without me needing to watch it closely
+At 3 hours they both restarted successfully as i can see with
+  `ps aux | grep python` and i can see the number of tracked
+  files increasing so we're back to working. I'm good to hit
+  publish on the stream and see what happens
+I hit the public button right as the stream ticked over to
+  3 hours and 10 minutes
