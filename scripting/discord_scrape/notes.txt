@@ -187,3 +187,18 @@ At 3 hours they both restarted successfully as i can see with
   publish on the stream and see what happens
 I hit the public button right as the stream ticked over to
   3 hours and 10 minutes
+
+It stopped at like 4:45, did my computer reboot? what happened?
+  I went back to the computer and it was logged out and no
+  programs were open. I might need to script this as systemd
+  services that start at boot
+
+I started it up again, and its run for 11:38+
+I started a backup stream with a specific watermark on my rasp
+  pi and have it streaming at the backup url
+I'm going to kill the main stream (./orchestrate.py --stream_only)
+  and see if the rasp pi can take over
+It worked!!!!
+I didnt watch to see if a viewere would have been interrupted but
+  on my streamer display it hung and put up a loading screen for
+  a few seconds then it jumped over to the fallback stream
