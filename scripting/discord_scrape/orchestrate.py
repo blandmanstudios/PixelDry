@@ -56,7 +56,7 @@ def main():
         print(arrange["proc"].poll())
         sleep(3)
         ffmpeg={'cmd': ["ffmpeg", "-re", "-stream_loop", "-1", "-f", "concat", "-safe", "0", "-i", "video_list.txt", "-stream_loop", "-1", "-f", "concat", "-safe", "0", "-i", "audio_list.txt", "-map", "0:v", "-map", "1:a", "-c:v", "libx264", "-shortest", "-qscale", "0", "-g", "1", "-f", "flv", "-c", "copy", f"rtmp://{stream_url}/{stream_key}"], 'cwd': "loop_dir"}
-        ffmpeg["proc"] = subprocess.Popen(ffmpeg["cmd"], cwd=ffmpeg["cwd"])
+        ffmpeg["proc"] = subprocess.Popen(ffmpeg["cmd"], cwd=ffmpeg["cwd"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         print(ffmpeg["proc"].poll())
 
 
