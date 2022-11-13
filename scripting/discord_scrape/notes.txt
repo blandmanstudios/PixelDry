@@ -202,3 +202,21 @@ It worked!!!!
 I didnt watch to see if a viewere would have been interrupted but
   on my streamer display it hung and put up a loading screen for
   a few seconds then it jumped over to the fallback stream
+I restarted the main stream to see if it comes back as the primary
+  but it doesnt look to be doing that automatically. I might need
+  to temp kill the fallback stream to get youtube to failback to
+  broadcasting the thing sent to the primary url
+I'm going to do that. Killing the rpi stream temporarily by giving
+  it a `killall ffmpeg` to see if it restarts itself and in the
+  small downtime youtube will switch over to the healthy primary
+  stream
+Yes!! it switched back to the major stream
+I can switch back and forth on purpose!
+It takes about 10 seconds and i just need to kill the one i need to
+  get off off
+So now i can disconnect from my rpi stream and trust that if my
+  computer reboots in the night the rpi will takeover as fallback
+In the future i can automate even more insurance like having this
+  start on my computers boot and run as a daemon process, but that
+  isnt necessary yet. And i could have the same thing happen on the
+  rpi but thats not necessary yet
