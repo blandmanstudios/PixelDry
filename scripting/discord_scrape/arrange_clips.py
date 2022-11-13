@@ -16,7 +16,7 @@ import argparse
 
 TIME_STEP = 20
 N_FILES = 100
-N_LEAD_CLIPS = 20
+N_LEAD_CLIPS = 6
 
 def main():
     parser = argparse.ArgumentParser(prog='myprogram')
