@@ -220,3 +220,25 @@ In the future i can automate even more insurance like having this
   start on my computers boot and run as a daemon process, but that
   isnt necessary yet. And i could have the same thing happen on the
   rpi but thats not necessary yet
+I'm also going to close my web browser that has the youtube livestream
+  control view and make sure that doesnt break the stream
+
+Created a copy then cleared some history cuz i ran out of buffer and
+  its causing duplicates
+The unmodified clipdb is copeid as clip_metadata.db.test1
+the modified one got this done to it
+
+select min(timestamp), max(timestamp), count() from clips where n_stitched=2; UPDATE clips SET n_stitched=0 WHERE n_stitched=2; select min(timestamp), max(timestamp), count() from clips where n_stitched=2;
+2022-11-11T04:40:43.567000+00:00|2022-11-14T05:09:15.730000+00:00|2035
+||0
+
+For now the answer to avoid duplicates is to occassionalyl clear out the backlog
+  with the commands above. The real answer will be to patch the arrange_clips
+  script so that if there is nothing that has been n_stitched=0 then it grabs
+  with some randomness. You dont want this scenario where we have shown
+  everything in the library 2 or 3 times and it needs to show something 2 times
+  to catch up. But also... I should add the general channels to the find script
+  and have those run. I just need to check that one 4x tracker and one 1x
+  downloader is enough to keep up with potentially 6 discord channels worth
+  of renders. I'll just need to do an analysis on the joined endings chart to
+  make sure that my avg number of frames per render doesnt go down too far
