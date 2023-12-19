@@ -1,2 +1,8 @@
 *.blend1
 raw_frames/second_numbers_at_24fps/output.mp4
+
+.venv
+airflow-home/airflow.db
+airflow-home/logs/
+airflow-home/webserver_config.py
+

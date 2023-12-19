@@ -1,0 +1,40 @@
+# create the virtualevnv
+python3 -m venv .venv
+
+# activate the virtualenv
+source .venv/bin/activate
+
+# install airflow to the virtualenv
+with the virtualenv activated install airflow with constraints so it is a reproducable install
+
+pip install "apache-airflow[celery]==2.8.0" --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-2.8.0/constraints-3.8.txt"
+
+# to run airflow
+with the virtualenv activated
+airflow standalone
+
+then visit localhost:8080 in the browser and login with the username and password provided in the terminal
+
+# setting airflow home to be in this folder then running it
+export AIRFLOW_HOME=$(pwd)/airflow-home
+airflow standalone
+
+# setting ariflow to run with mysql so i can do concurrency
+sudo systemctl start mysqld
+mysql -u root -p
+create schema airflowmysqldb
+CREATE USER 'insecure_user'@'localhost' IDENTIFIED BY 'password'
+GRANT ALL PRIVILEGES ON airflowmysqldb.* TO 'insecure_user'@'localhost';
+
+# set the following variable in airflow-home/airflow.cfg
+sql_alchemy_conn = mysql+mysqldb://insecure_user:password@localhost/airflowmysqldb
+
+# install the py pysql client
+pip install mysqlclient mysql-connector-python
+
+
+# cleaning up cuz I'm clearly hacking and this is getting wacky
+systemctl stop mysqld
+changing the db string back to what it was with sqlite
+
+
