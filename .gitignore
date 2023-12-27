@@ -1,2 +1,4 @@
 *.blend1
 raw_frames/second_numbers_at_24fps/output.mp4
+
+__pycache__/
