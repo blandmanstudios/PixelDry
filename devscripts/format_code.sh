@@ -1,3 +1,3 @@
 #!/usr/bin/bash
 
-black src/wcdraw
+black src/wcdraw -l 79

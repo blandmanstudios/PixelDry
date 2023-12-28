@@ -1,0 +1,3 @@
+sqldb_username: EXAMPLE_USERNAME_HERE
+sqldb_password: EXAMPLE_PASSWORD_HERE
+discord_access_token: EXAMPLE_TOKEN
