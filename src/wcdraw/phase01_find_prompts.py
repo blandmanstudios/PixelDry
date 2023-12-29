@@ -127,7 +127,7 @@ def get_latest_messages(token, channel_id, count=100):
 
 
 def get_prompt_info(message, session, channel):
-    prompt = message["content"].split("**")[1]
+    prompt_text = message["content"].split("**")[1]
     author_id = message["mentions"][0]["id"]
     author_username = message["mentions"][0]["username"]
     author_discriminator = message["mentions"][0]["discriminator"]
@@ -143,6 +143,7 @@ def get_prompt_info(message, session, channel):
     print("found one at zero percent")
     if not prompt_discovered:
         prompt = Prompt(
+            prompt_text=prompt_text,
             author_id=author_id,
             author_username=author_username,
             author_discriminator=author_discriminator,

@@ -11,6 +11,7 @@ Base = declarative_base()
 class Prompt(Base):
     __tablename__ = "prompt"
     id = Column(Integer, primary_key=True)
+    prompt_text = Column(Text)
     message_id = Column(Text)
     author_id = Column(Text)
     author_username = Column(Text)
@@ -22,6 +23,7 @@ class Prompt(Base):
     def as_dict(self):
         return dict(
             message_id=self.message_id,
+            prompt_text=self.prompt_text,
             author_id=self.author_id,
             author_username=self.author_username,
             author_discriminator=self.author_discriminator,
