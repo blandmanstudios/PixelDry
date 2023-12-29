@@ -1,0 +1,26 @@
+I'm going to give up on this effort to refactor to use pika
+I still might continue my refactor to use MySQL and sqlalchemy
+
+But rabbitmq has been particularly difficult to work with
+- It has an RPM on Fedora 39, but isn't supported and doesn't work out of the
+  box and a wasted a full day wrestling with that then ultimately rolling back
+  to Fedora 38
+- When i finally did get it working it only runs for a couple hours till it
+  throws an error for a connection issue. I could do more to debug that
+  connection issue. But I wanted to write a simple retry loop or exception to
+  revive the connection, so I could be prepared for the full family of rabbit
+  issues that could come up, but that didn't exist or wasn't easy to find online
+Therefore, instead of continuing to wrestle with rabbitmq, I'm going to say that
+  these couple days of testing were worthwhile for me to prove that this isn't
+  the way to go. If I take on this dependency, I'm signing this project up for
+  more of these pain-in-the neck issues. And because I am going to be logging
+  some amount of state in SQL, I might as well just store all state in there.
+  That is going to be better overall because if I write the correct wrappers
+  around it and design the data model correctly, I will have a bunch of helpful
+  utilities for putting things into and flusing out test databases. I will also
+  have good transparency into the current state that I'll be able to see how
+  many things are in what tables and watch they match too
+
+Therefore, this branch is done. I'm going to push it up to gitlab so I have the
+  code saved and I can use it in a sqlalchemy refactor. But I dont need to take
+  on a rabbitmq dependency and keep going with this pika refactor
