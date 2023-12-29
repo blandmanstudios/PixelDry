@@ -59,7 +59,7 @@ def main():
     )
     Base.metadata.create_all(engine)
     connection = pika.BlockingConnection(
-        pika.ConnectionParameters(host="localhost")
+        pika.ConnectionParameters(host="localhost", heartbeat=10)
     )
     channel = connection.channel()
     channel.queue_declare(queue="wcd_prompts", durable=True)
@@ -69,6 +69,8 @@ def main():
         main_loop_iteration(
             discord_access_token, channel_ids, session, channel
         )
+        if i % 2 == 0:
+            connection.process_data_events()
         time.sleep(1)
         i = i + 1
 
