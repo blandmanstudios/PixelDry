@@ -6,32 +6,10 @@ import requests
 import json
 import pika
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, Text, DateTime
 from sqlalchemy import create_engine
-from sqlalchemy.orm import declarative_base, Session
-
-Base = declarative_base()
-
-
-class Prompt(Base):
-    __tablename__ = "prompt"
-    id = Column(Integer, primary_key=True)
-    message_id = Column(Text)
-    author_id = Column(Text)
-    author_username = Column(Text)
-    author_discriminator = Column(Text)
-    channel_id = Column(Text)
-    timestamp = Column(DateTime)
-    def as_json(self):
-        return json.dumps(dict(
-            message_id = self.message_id,
-            author_id = self.author_id,
-            author_username = self.author_username,
-            author_discriminator = self.author_discriminator,
-            channel_id = self.channel_id,
-            timestamp = self.timestamp.isoformat()
-        ))
-
+from sqlalchemy.orm import Session
+from common import Base, Prompt
+from pika.exceptions import StreamLostError
 
 
 API_ENDPOINT = "https://discord.com/api/v10"
@@ -73,21 +51,24 @@ def main():
     discord_access_token = params["discord_access_token"]
     channel_ids = list(CHAN_ID_MAP[i] for i in args.list_channels)
     # print(channel_ids)
-    sqldb_username = params['sqldb_username']
-    sqldb_password = params['sqldb_password']
+    sqldb_username = params["sqldb_username"]
+    sqldb_password = params["sqldb_password"]
     engine = create_engine(
         f"mariadb+pymysql://{sqldb_username}:{sqldb_password}@localhost/wcddb?charset=utf8mb4",
         future=True,
     )
     Base.metadata.create_all(engine)
     connection = pika.BlockingConnection(
-        pika.ConnectionParameters(host='localhost'))
+        pika.ConnectionParameters(host="localhost")
+    )
     channel = connection.channel()
-    channel.queue_declare(queue='wcd_prompts', durable=True)
+    channel.queue_declare(queue="wcd_prompts", durable=True)
     i = 0
     session = Session(engine)
     while args.iterations < 0 or i < args.iterations:
-        main_loop_iteration(discord_access_token, channel_ids, session, channel)
+        main_loop_iteration(
+            discord_access_token, channel_ids, session, channel
+        )
         time.sleep(1)
         i = i + 1
 
@@ -148,13 +129,16 @@ def get_prompt_info(message, session, channel):
     author_id = message["mentions"][0]["id"]
     author_username = message["mentions"][0]["username"]
     author_discriminator = message["mentions"][0]["discriminator"]
-    timestamp = datetime.strptime(message["timestamp"], '%Y-%m-%dT%H:%M:%S.%f%z')
+    timestamp = datetime.strptime(
+        message["timestamp"], "%Y-%m-%dT%H:%M:%S.%f%z"
+    )
     message_id = message["id"]
     channel_id = message["channel_id"]
     # json_pretty_print(message)
     q = session.query(Prompt.id).filter(Prompt.message_id == message_id)
     prompt_discovered = session.query(q.exists()).scalar()
-    print ('found one at zero percent')
+    session.commit()
+    print("found one at zero percent")
     if not prompt_discovered:
         prompt = Prompt(
             author_id=author_id,
@@ -162,20 +146,29 @@ def get_prompt_info(message, session, channel):
             author_discriminator=author_discriminator,
             timestamp=timestamp,
             message_id=message_id,
-            channel_id=channel_id
+            channel_id=channel_id,
         )
         message = prompt.as_json()
-        channel.basic_publish(
-            exchange='',
-            routing_key='wcd_prompts',
-            body=message,
-            properties=pika.BasicProperties(
-                delivery_mode=pika.DeliveryMode.Persistent
-            ))
-        # print(f" [x] Sent {message}")
-        print('added it to the queue')
-        session.add(prompt)
-        session.commit()
+        session.begin()
+        try:
+            channel.basic_publish(
+                exchange="",
+                routing_key="wcd_prompts",
+                body=message,
+                properties=pika.BasicProperties(
+                    delivery_mode=pika.DeliveryMode.Persistent
+                ),
+            )
+            # print(f" [x] Sent {message}")
+            print("added it to the queue")
+            session.add(prompt)
+        except StreamLostError as ex:
+            print(ex)
+            print(message)
+            session.rollback()
+        else:
+            session.commit()
+
 
 def json_pretty_print(in_val):
     print(json.dumps(in_val, indent=4))
