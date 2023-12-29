@@ -4,12 +4,10 @@ import yaml
 import time
 import requests
 import json
-import pika
 from datetime import datetime
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from common import Base, Prompt
-from pika.exceptions import StreamLostError
 
 
 API_ENDPOINT = "https://discord.com/api/v10"
@@ -58,24 +56,17 @@ def main():
         future=True,
     )
     Base.metadata.create_all(engine)
-    connection = pika.BlockingConnection(
-        pika.ConnectionParameters(host="localhost", heartbeat=10)
-    )
-    channel = connection.channel()
-    channel.queue_declare(queue="wcd_prompts", durable=True)
     i = 0
     session = Session(engine)
     while args.iterations < 0 or i < args.iterations:
         main_loop_iteration(
-            discord_access_token, channel_ids, session, channel
+            discord_access_token, channel_ids, session
         )
-        if i % 2 == 0:
-            connection.process_data_events()
         time.sleep(1)
         i = i + 1
 
 
-def main_loop_iteration(token, channel_ids, session, channel):
+def main_loop_iteration(token, channel_ids, session):
     # collect the latest messages from the desired channels
     messages = []
     for item in channel_ids:
@@ -103,7 +94,7 @@ def main_loop_iteration(token, channel_ids, session, channel):
         if "(0%)" in special_string:
             message_is_queued_to_start_soon = True
             # print("FOUNDONE")
-            info = get_prompt_info(message, session, channel)
+            info = get_prompt_info(message, session)
         elif "(" in special_string and "%)" in special_string:
             # There is nothing (very) useful about finding an in-progress render
             # if we cant track it from the beginning
@@ -126,7 +117,7 @@ def get_latest_messages(token, channel_id, count=100):
     return messages
 
 
-def get_prompt_info(message, session, channel):
+def get_prompt_info(message, session):
     prompt_text = message["content"].split("**")[1]
     author_id = message["mentions"][0]["id"]
     author_username = message["mentions"][0]["username"]
@@ -153,24 +144,9 @@ def get_prompt_info(message, session, channel):
         )
         message = prompt.as_json()
         session.begin()
-        try:
-            channel.basic_publish(
-                exchange="",
-                routing_key="wcd_prompts",
-                body=message,
-                properties=pika.BasicProperties(
-                    delivery_mode=pika.DeliveryMode.Persistent
-                ),
-            )
-            # print(f" [x] Sent {message}")
-            print("added it to the queue")
-            session.add(prompt)
-        except StreamLostError as ex:
-            print(ex)
-            print(message)
-            session.rollback()
-        else:
-            session.commit()
+        session.add(prompt)
+        session.commit()
+        print('it was new, added to db')
 
 
 def json_pretty_print(in_val):
