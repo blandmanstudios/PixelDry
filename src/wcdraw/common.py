@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import json
+from datetime import datetime
 from sqlalchemy import Column, Integer, String, Text, DateTime
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import declarative_base, relationship
@@ -51,3 +52,10 @@ class RenderStage(Base):
 
     def as_json(self):
         return json.dumps(self.as_dict())
+
+
+def timestring_to_datetime(timestring):
+    # if there is no millisecond value, lets assume 00
+    if "." not in timestring:
+        timestring = timestring.replace("+", ".00+")
+    return datetime.strptime(timestring, "%Y-%m-%dT%H:%M:%S.%f%z")

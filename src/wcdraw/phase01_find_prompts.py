@@ -4,10 +4,9 @@ import yaml
 import time
 import requests
 import json
-from datetime import datetime
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
-from common import Base, Prompt
+from common import Base, Prompt, timestring_to_datetime
 
 
 API_ENDPOINT = "https://discord.com/api/v10"
@@ -59,9 +58,7 @@ def main():
     i = 0
     session = Session(engine)
     while args.iterations < 0 or i < args.iterations:
-        main_loop_iteration(
-            discord_access_token, channel_ids, session
-        )
+        main_loop_iteration(discord_access_token, channel_ids, session)
         time.sleep(1)
         i = i + 1
 
@@ -122,9 +119,7 @@ def get_prompt_info(message, session):
     author_id = message["mentions"][0]["id"]
     author_username = message["mentions"][0]["username"]
     author_discriminator = message["mentions"][0]["discriminator"]
-    timestamp = datetime.strptime(
-        message["timestamp"], "%Y-%m-%dT%H:%M:%S.%f%z"
-    )
+    timestamp = timestring_to_datetime(message["timestamp"])
     message_id = message["id"]
     channel_id = message["channel_id"]
     # json_pretty_print(message)
@@ -146,7 +141,7 @@ def get_prompt_info(message, session):
         session.begin()
         session.add(prompt)
         session.commit()
-        print('it was new, added to db')
+        print("it was new, added to db")
 
 
 def json_pretty_print(in_val):
