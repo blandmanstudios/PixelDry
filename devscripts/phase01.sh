@@ -6,7 +6,7 @@
 # Run forever
 # ./src/wcdraw/phase01_find_prompts.py -c secure_params.yml -l 24 54 84 -i -1
 
-
+# Run on repeat logging crashes to a specific file
 for i in {1..200}
 do
 	echo "Run $i"
