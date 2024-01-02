@@ -6,7 +6,7 @@ import requests
 import json
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
-from common import Base, Prompt, timestring_to_datetime
+from common import Base, Prompt, timestring_to_datetime, json_pretty_print
 
 
 API_ENDPOINT = "https://discord.com/api/v10"
@@ -144,10 +144,6 @@ def get_prompt_info(message, session):
         session.add(prompt)
         session.commit()
         print("it was new, added to db")
-
-
-def json_pretty_print(in_val):
-    print(json.dumps(in_val, indent=4))
 
 
 if __name__ == "__main__":

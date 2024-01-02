@@ -64,6 +64,7 @@ class RenderStage(Base):
     prompt_id = Column(Integer, ForeignKey("prompt.id"))
     percentage = Column(Integer)
     image_url = Column(Text)
+    local_path = Column(Text)
 
     def as_dict(self):
         return dict(
@@ -81,3 +82,7 @@ def timestring_to_datetime(timestring):
     if "." not in timestring:
         timestring = timestring.replace("+", ".00+")
     return datetime.strptime(timestring, "%Y-%m-%dT%H:%M:%S.%f%z")
+
+
+def json_pretty_print(in_val):
+    print(json.dumps(in_val, indent=4))

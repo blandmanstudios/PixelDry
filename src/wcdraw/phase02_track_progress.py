@@ -4,12 +4,13 @@ import yaml
 import time
 import requests
 import json
+import shutil
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
-from common import Base, Prompt, RenderStage
+from common import Base, Prompt, RenderStage, json_pretty_print
 
 API_ENDPOINT = "https://discord.com/api/v10"
-MAX_ATTEMPTS_TO_SCRAPE = 10
+MAX_ATTEMPTS_TO_SCRAPE = 100
 
 
 def main():
@@ -42,8 +43,8 @@ def main():
     Base.metadata.create_all(engine)
     i = 0
     while args.iterations < 0 or i < args.iterations:
-        session = Session(engine)
-        main_loop_iteration(discord_access_token, session)
+        with Session(engine) as session:
+            main_loop_iteration(discord_access_token, session)
         time.sleep(1)
         i += 1
     print("done")
@@ -82,6 +83,43 @@ def main_loop_iteration(token, session):
             print(
                 f"found something in progress message_id={prompt.message_id} username={prompt.author_username}"
             )
+            # json_pretty_print(message)
+
+            # Parse out the progress percentage
+            special_string = message["content"].split(" ")[-2:-1][0]
+            if "(" in special_string and ")" in special_string:
+                percentage = int(
+                    special_string.replace("(", "")
+                    .replace(")", "")
+                    .replace("%", "")
+                )
+            image_url = ""
+            # Parse out the image url and filetype
+            for attachment in message["attachments"]:
+                image_url = attachment["url"]
+            extension = image_url.split(".")[-1].split("?")[0]
+            # If the stage hasn't been visited yet, download and add it
+            stage = (
+                session.query(RenderStage)
+                .filter(RenderStage.prompt_id == prompt.id)
+                .filter(RenderStage.percentage == percentage)
+                .first()
+            )
+            if stage is None and percentage != 0 and image_url != None:
+                print(f"downloading the image for percentage={percentage}")
+                local_path = f"data/{prompt.id}_{percentage}.{extension}"
+                stage = RenderStage(
+                    prompt_id=prompt.id,
+                    percentage=percentage,
+                    image_url=image_url,
+                    local_path=local_path,
+                )
+                # Download the image
+                response = requests.get(image_url, stream=True)
+                with open(local_path, "wb") as outfile:
+                    shutil.copyfileobj(response.raw, outfile)
+                del response
+                session.add(stage)
         else:
             # give up on this cuz we arent even getting results on that message anymore immediately
             # this happens when a render has finished and midjourney bot deletes the message and
@@ -92,7 +130,6 @@ def main_loop_iteration(token, session):
             prompt.is_abandoned = True
         prompt.n_tries += 1
         session.add(prompt)
-        session.commit()
         session.commit()
     return
 

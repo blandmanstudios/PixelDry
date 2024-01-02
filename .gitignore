@@ -5,3 +5,4 @@ secure_params.yml
 __pycache__/
 phase01_output.txt
 phase02_output.txt
+data/
