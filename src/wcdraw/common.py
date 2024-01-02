@@ -2,9 +2,10 @@
 
 import json
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, Text, DateTime
-from sqlalchemy import ForeignKey
+from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean
+from sqlalchemy import ForeignKey, select, func
 from sqlalchemy.orm import declarative_base, relationship
+from sqlalchemy.ext.hybrid import hybrid_property
 
 Base = declarative_base()
 
@@ -19,7 +20,28 @@ class Prompt(Base):
     author_discriminator = Column(Text)
     channel_id = Column(Text)
     timestamp = Column(DateTime)
+    is_abandoned = Column(Boolean, default=False)
+    n_tries = Column(Integer, default=0)
     render_stages = relationship("RenderStage")
+
+    @hybrid_property
+    def is_complete(self):
+        for stage in self.render_stages:
+            if stage.percentage == 100:
+                return True
+        return False
+
+    @is_complete.expression
+    def is_complete(cls):
+        return (
+            select(func.count(RenderStage.id) > 0)
+            .where(
+                (RenderStage.prompt_id == cls.id)
+                & (RenderStage.percentage == 100)
+            )
+            .label("is_complete")
+        )
+        pass
 
     def as_dict(self):
         return dict(
