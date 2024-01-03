@@ -60,7 +60,6 @@ def main():
 def main_loop_iteration(token, session):
     prompts = (
         session.query(Prompt)
-        .filter(Prompt.is_complete == False)
         .filter(Prompt.n_tries < MAX_ATTEMPTS_TO_SCRAPE)
         .filter(Prompt.is_abandoned == False)
         .order_by(Prompt.n_tries.asc(), Prompt.timestamp.asc())

@@ -27,25 +27,6 @@ class Prompt(Base):
     n_tries = Column(Integer, default=0)
     render_stages = relationship("RenderStage")
 
-    @hybrid_property
-    def is_complete(self):
-        for stage in self.render_stages:
-            if stage.percentage == 100:
-                return True
-        return False
-
-    @is_complete.expression
-    def is_complete(cls):
-        return (
-            select(func.count(RenderStage.id) > 0)
-            .where(
-                (RenderStage.prompt_id == cls.id)
-                & (RenderStage.percentage == 100)
-            )
-            .label("is_complete")
-        )
-        pass
-
     def as_dict(self):
         return dict(
             message_id=self.message_id,
