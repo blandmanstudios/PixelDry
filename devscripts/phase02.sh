@@ -4,7 +4,7 @@
 # ./src/wcdraw/phase02_track_progress.py -c secure_params.yml -i -1
 
 # Run on repeat logging crashes to a specific file
-for i in {1..200}
+for i in {1..30}
 do
 	echo "Run $i"
 	echo "Run $i" >> phase02_output.txt
