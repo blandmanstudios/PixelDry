@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import unittest
 from wcdraw.common import timestring_to_datetime, Prompt, Base
+from wcdraw.common import get_percentage_from_content
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
@@ -32,6 +33,18 @@ class TestMethods(unittest.TestCase):
         atypical_time = "2023-12-30T02:04:29+00:00"
         timestamp = timestring_to_datetime(typical_time)
         timestamp = timestring_to_datetime(atypical_time)
+
+    def test_get_percentage_from_content(self):
+        content_string = "**this is where the prompt goes** - <@999999999999999999> (0%) (fast)"
+        self.assertEqual(get_percentage_from_content(content_string), 0)
+        content_string = "**this is where the prompt goes** - <@999999999999999999> (15%) (fast)"
+        self.assertEqual(get_percentage_from_content(content_string), 15)
+        content_string = "**this is where the prompt goes** - <@999999999999999999> (46%) (fast)"
+        self.assertEqual(get_percentage_from_content(content_string), 46)
+        content_string = "**this is where the prompt goes** - <@999999999999999999> (Waiting to start) (fast)"
+        self.assertEqual(get_percentage_from_content(content_string), None)
+        content_string = "**this is where the prompt goes** - <@999999999999999999> (paused) (fast)"
+        self.assertEqual(get_percentage_from_content(content_string), None)
 
 
 if __name__ == "__main__":

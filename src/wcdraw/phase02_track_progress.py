@@ -7,7 +7,7 @@ import json
 import shutil
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
-from common import Base, Prompt, RenderStage, json_pretty_print
+from common import Base, Prompt, RenderStage, json_pretty_print, get_percentage_from_content
 
 API_ENDPOINT = "https://discord.com/api/v10"
 MAX_ATTEMPTS_TO_SCRAPE = 100
@@ -86,13 +86,8 @@ def main_loop_iteration(token, session):
             # json_pretty_print(message)
 
             # Parse out the progress percentage
-            special_string = message["content"].split(" ")[-2:-1][0]
-            if "(" in special_string and ")" in special_string:
-                percentage = int(
-                    special_string.replace("(", "")
-                    .replace(")", "")
-                    .replace("%", "")
-                )
+            percentage = get_percentage_from_content(message["content"])
+
             image_url = ""
             # Parse out the image url and filetype
             for attachment in message["attachments"]:
@@ -105,7 +100,12 @@ def main_loop_iteration(token, session):
                 .filter(RenderStage.percentage == percentage)
                 .first()
             )
-            if stage is None and percentage != 0 and image_url != None:
+            if (
+                stage is None
+                and percentage is not None
+                and percentage != 0
+                and image_url != None
+            ):
                 print(f"downloading the image for percentage={percentage}")
                 local_path = f"data/{prompt.id}_{percentage}.{extension}"
                 stage = RenderStage(

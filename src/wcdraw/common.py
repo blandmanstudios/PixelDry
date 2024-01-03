@@ -84,5 +84,16 @@ def timestring_to_datetime(timestring):
     return datetime.strptime(timestring, "%Y-%m-%dT%H:%M:%S.%f%z")
 
 
+def get_percentage_from_content(content_string):
+    # Parse out the progress percentage
+    special_string = content_string.split(" ")[-2:-1][0]
+    if "(" in special_string and ")" in special_string:
+        segment = (
+            special_string.replace("(", "").replace(")", "").replace("%", "")
+        )
+        return int(segment) if segment.isdigit() else None
+    return None
+
+
 def json_pretty_print(in_val):
     print(json.dumps(in_val, indent=4))
