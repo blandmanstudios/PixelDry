@@ -7,7 +7,13 @@ import json
 import shutil
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
-from common import Base, Prompt, RenderStage, json_pretty_print, get_percentage_from_content
+from common import (
+    Base,
+    Prompt,
+    RenderStage,
+    json_pretty_print,
+    get_percentage_from_content,
+)
 
 API_ENDPOINT = "https://discord.com/api/v10"
 MAX_ATTEMPTS_TO_SCRAPE = 100
@@ -92,6 +98,11 @@ def main_loop_iteration(token, session):
             # Parse out the image url and filetype
             for attachment in message["attachments"]:
                 image_url = attachment["url"]
+                render_id = (
+                    attachment["filename"].rstrip(".webp").split("_")[0]
+                )
+                if render_id is not None:
+                    prompt.render_id = render_id
             extension = image_url.split(".")[-1].split("?")[0]
             # If the stage hasn't been visited yet, download and add it
             stage = (
@@ -100,11 +111,7 @@ def main_loop_iteration(token, session):
                 .filter(RenderStage.percentage == percentage)
                 .first()
             )
-            if (
-                stage is None
-                and percentage is not None
-                and image_url != ''
-            ):
+            if stage is None and percentage is not None and image_url != "":
                 print(f"downloading the image for percentage={percentage}")
                 local_path = f"data/{prompt.id}_{percentage}.{extension}"
                 stage = RenderStage(

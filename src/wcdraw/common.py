@@ -13,6 +13,9 @@ Base = declarative_base()
 class Prompt(Base):
     __tablename__ = "prompt"
     id = Column(Integer, primary_key=True)
+    render_id = Column(Text)
+    final_url = Column(Text)
+    final_message_id = Column(Text)
     prompt_text = Column(Text)
     message_id = Column(Text)
     author_id = Column(Text)

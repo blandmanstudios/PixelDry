@@ -69,7 +69,8 @@ def main_loop_iteration(token, channel_ids, session):
     # collect the latest messages from the desired channels
     messages = []
     for item in channel_ids:
-        messages.extend(get_latest_messages(token, item, 100))
+        # prelim testing shows a query of 15 doesnt miss much
+        messages.extend(get_latest_messages(token, item, 15))
     # print(len(messages))
     # loop through the latest messages
     for message in messages:
@@ -87,6 +88,7 @@ def main_loop_iteration(token, channel_ids, session):
         if "https" in message["content"]:
             continue
         # bandaid: skip messages using chars that break my sql
+        # note: this bandaid is likely obselete
         if "'" in message["content"]:
             continue
         special_string = message["content"].split(" ")[-2:-1][0]
@@ -99,9 +101,20 @@ def main_loop_iteration(token, channel_ids, session):
             # if we cant track it from the beginning
             pass
         else:
-            # TODO: we should do something with completed images here if we want
-            # to match the old prototype's design
-            pass
+            # For the images that are finished we check if they are one of our
+            # renders and if they are we should save their final info
+            if "attachments" in message and len(message["attachments"]) > 0:
+                attachment = message["attachments"][0]
+                render_id = (
+                    attachment["filename"].rstrip(".png").split("_")[-1]
+                )
+                q = session.query(Prompt).filter(Prompt.render_id == render_id)
+                prompt = q.first()
+                if prompt is not None:
+                    prompt.final_url = attachment["url"]
+                    prompt.final_message_id = message['id']
+                    session.add(prompt)
+                    session.commit()
 
 
 def get_latest_messages(token, channel_id, count=100):
@@ -130,6 +143,7 @@ def get_prompt_info(message, session):
     session.commit()
     print("found one at zero percent")
     if not prompt_discovered:
+        # json_pretty_print(message)
         prompt = Prompt(
             prompt_text=prompt_text,
             author_id=author_id,
