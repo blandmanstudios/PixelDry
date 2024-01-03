@@ -103,8 +103,7 @@ def main_loop_iteration(token, session):
             if (
                 stage is None
                 and percentage is not None
-                and percentage != 0
-                and image_url != None
+                and image_url != ''
             ):
                 print(f"downloading the image for percentage={percentage}")
                 local_path = f"data/{prompt.id}_{percentage}.{extension}"
