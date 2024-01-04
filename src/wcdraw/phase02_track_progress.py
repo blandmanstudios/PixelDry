@@ -111,7 +111,9 @@ def main_loop_iteration(token, session):
                 .first()
             )
             if stage is None and percentage is not None and image_url != "":
-                print(f"downloading the image for percentage={percentage}")
+                print(
+                    f"downloading the image for prompt_id={prompt.id} percentage={percentage}"
+                )
                 local_path = f"data/{prompt.id}_{percentage}.{extension}"
                 stage = RenderStage(
                     prompt_id=prompt.id,
@@ -119,12 +121,19 @@ def main_loop_iteration(token, session):
                     image_url=image_url,
                     local_path=local_path,
                 )
-                # Download the image
-                response = requests.get(image_url, stream=True)
-                with open(local_path, "wb") as outfile:
-                    shutil.copyfileobj(response.raw, outfile)
-                del response
-                session.add(stage)
+                try:
+                    # Download the image
+                    response = requests.get(image_url, stream=True)
+                    with open(local_path, "wb") as outfile:
+                        shutil.copyfileobj(response.raw, outfile)
+                    del response
+                    session.add(stage)
+                except requests.exceptions.ConnectionError as ex:
+                    # this happened in my testing, I suspect it is because the dicord bot changed
+                    #   the image associated with this message before we got a chance to download
+                    #   it, so the downloading the image fails
+                    # thus, for this edge case, we log and move on (no retry)
+                    print("failed to download image, skipping ex={ex}")
         else:
             # give up on this cuz we arent even getting results on that message anymore immediately
             # this happens when a render has finished and midjourney bot deletes the message and
