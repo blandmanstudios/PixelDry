@@ -108,12 +108,18 @@ def main_loop_iteration(token, channel_ids, session):
                 render_id = (
                     attachment["filename"].rstrip(".png").split("_")[-1]
                 )
-                q = session.query(Prompt).filter((Prompt.render_id == render_id) & (Prompt.final_url == None) & (Prompt.final_message_id == None))
+                q = session.query(Prompt).filter(
+                    (Prompt.render_id == render_id)
+                    & (Prompt.final_url == None)
+                    & (Prompt.final_message_id == None)
+                )
                 prompt = q.first()
                 if prompt is not None:
-                    print(f'found the end of the render with prompt_id={prompt.id}')
+                    print(
+                        f"found the end of the render with prompt_id={prompt.id}"
+                    )
                     prompt.final_url = attachment["url"]
-                    prompt.final_message_id = message['id']
+                    prompt.final_message_id = message["id"]
                     session.add(prompt)
                     session.commit()
 
