@@ -58,14 +58,13 @@ def main():
     )
     Base.metadata.create_all(engine)
     i = 0
-    session = Session(engine)
     while args.iterations < 0 or i < args.iterations:
-        main_loop_iteration(discord_access_token, channel_ids, session)
+        main_loop_iteration(discord_access_token, channel_ids, engine)
         time.sleep(1)
         i = i + 1
 
 
-def main_loop_iteration(token, channel_ids, session):
+def main_loop_iteration(token, channel_ids, engine):
     # collect the latest messages from the desired channels
     messages = []
     for item in channel_ids:
@@ -95,7 +94,7 @@ def main_loop_iteration(token, channel_ids, session):
         if "(0%)" in special_string:
             # TODO: We should add "(Waiting to start)" to this condition
             message_is_queued_to_start_soon = True
-            info = get_prompt_info(message, session)
+            info = get_prompt_info(message, engine)
         elif "(" in special_string and "%)" in special_string:
             # There is nothing (very) useful about finding an in-progress render
             # if we cant track it from the beginning, so do nothing with it
@@ -103,7 +102,7 @@ def main_loop_iteration(token, channel_ids, session):
         else:
             # For the images that are finished we check if they are one of our
             # renders and if they are we should save their final info
-            info = save_finished_prompts(message, session)
+            info = save_finished_prompts(message, engine)
 
 
 def get_latest_messages(token, channel_id, count=100):
@@ -118,7 +117,7 @@ def get_latest_messages(token, channel_id, count=100):
     return messages
 
 
-def get_prompt_info(message, session):
+def get_prompt_info(message, engine):
     prompt_text = message["content"].split("**")[1]
     author_id = message["mentions"][0]["id"]
     author_username = message["mentions"][0]["username"]
@@ -127,44 +126,46 @@ def get_prompt_info(message, session):
     message_id = message["id"]
     channel_id = message["channel_id"]
     # json_pretty_print(message)
-    q = session.query(Prompt.id).filter(Prompt.message_id == message_id)
-    prompt_discovered = session.query(q.exists()).scalar()
-    session.commit()
-    print("found one at zero percent")
-    if not prompt_discovered:
-        # json_pretty_print(message)
-        prompt = Prompt(
-            prompt_text=prompt_text,
-            author_id=author_id,
-            author_username=author_username,
-            author_discriminator=author_discriminator,
-            timestamp=timestamp,
-            message_id=message_id,
-            channel_id=channel_id,
-        )
-        message = prompt.as_json()
-        session.begin()
-        session.add(prompt)
-        session.commit()
-        print("it was new, added to db")
+    with Session(engine) as session:
+        q = session.query(Prompt.id).filter(Prompt.message_id == message_id)
+        prompt_discovered = session.query(q.exists()).scalar()
+        print("found one at zero percent")
+        if not prompt_discovered:
+            # json_pretty_print(message)
+            prompt = Prompt(
+                prompt_text=prompt_text,
+                author_id=author_id,
+                author_username=author_username,
+                author_discriminator=author_discriminator,
+                timestamp=timestamp,
+                message_id=message_id,
+                channel_id=channel_id,
+            )
+            message = prompt.as_json()
+            session.add(prompt)
+            session.commit()
+            print("it was new, added to db")
 
 
-def save_finished_prompts(message, session):
+def save_finished_prompts(message, engine):
     if "attachments" in message and len(message["attachments"]) > 0:
         attachment = message["attachments"][0]
         render_id = attachment["filename"].rstrip(".png").split("_")[-1]
-        q = session.query(Prompt).filter(
-            (Prompt.render_id == render_id)
-            & (Prompt.final_url == None)
-            & (Prompt.final_message_id == None)
-        )
-        prompt = q.first()
-        if prompt is not None:
-            print(f"found the end of the render with prompt_id={prompt.id}")
-            prompt.final_url = attachment["url"]
-            prompt.final_message_id = message["id"]
-            session.add(prompt)
-            session.commit()
+        with Session(engine) as session:
+            q = session.query(Prompt).filter(
+                (Prompt.render_id == render_id)
+                & (Prompt.final_url == None)
+                & (Prompt.final_message_id == None)
+            )
+            prompt = q.first()
+            if prompt is not None:
+                print(
+                    f"found the end of the render with prompt_id={prompt.id}"
+                )
+                prompt.final_url = attachment["url"]
+                prompt.final_message_id = message["id"]
+                session.add(prompt)
+                session.commit()
 
 
 if __name__ == "__main__":
