@@ -2,15 +2,13 @@
 import argparse
 import yaml
 import time
-import requests
 import json
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from common import Base, Prompt, timestring_to_datetime, json_pretty_print
-from common import warn
+from common import safe_get_discord_messages
 
 
-API_ENDPOINT = "https://discord.com/api/v10"
 CHAN_ID_MAP = {
     24: "989268312036896818",
     54: "997260995883966464",
@@ -107,32 +105,9 @@ def main_loop_iteration(token, channel_ids, engine):
 
 
 def get_latest_messages(token, channel_id, count=100):
-    headers = {"Authorization": token}
-    try:
-        resp = requests.get(
-            f"{API_ENDPOINT}/channels/{channel_id}/messages?limit={count}",
-            headers=headers,
-            timeout=10,
-        )
-        messages = resp.json()
-    except requests.exceptions.ReadTimeout as ex:
-        warn(
-            f"Network failure (likely because we are disconnected from the internet), ex={ex}"
-        )
-        return []
-    except requests.exceptions.SSLError as ex:
-        warn(
-            f"Network failure (likely because we are disconnected from the internet), ex={ex}"
-        )
-        return []
-    except requests.exceptions.ConnectionError as ex:
-        warn(
-            f"Network failure (likely because we are disconnected from the internet), ex={ex}"
-        )
-        return []
-    # json_formatted_str = json.dumps(res, indent=4)
-    # print(json_formatted_str)
-    return messages
+    return safe_get_discord_messages(
+        token=token, channel_id=channel_id, message_id=None, count=count
+    )
 
 
 def get_prompt_info(message, engine):

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import json
+import requests
 from datetime import datetime
 from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean
 from sqlalchemy import ForeignKey, select, func
@@ -8,6 +9,8 @@ from sqlalchemy.orm import declarative_base, relationship
 from sqlalchemy.ext.hybrid import hybrid_property
 
 Base = declarative_base()
+
+API_ENDPOINT = "https://discord.com/api/v10"
 
 
 class Prompt(Base):
@@ -77,6 +80,36 @@ def get_percentage_from_content(content_string):
         )
         return int(segment) if segment.isdigit() else None
     return None
+
+
+def safe_get_discord_messages(token, channel_id, message_id=None, count=100):
+    headers = {"Authorization": token}
+    try:
+        url = f"{API_ENDPOINT}/channels/{channel_id}/messages?limit={count}"
+        if message_id is not None:
+            url += f"&around={message_id}"
+        resp = requests.get(
+            url,
+            headers=headers,
+            timeout=10,
+        )
+        messages = resp.json()
+    except requests.exceptions.ReadTimeout as ex:
+        warn(
+            f"Network failure (likely because we are disconnected from the internet), ex={ex}"
+        )
+        return []
+    except requests.exceptions.SSLError as ex:
+        warn(
+            f"Network failure (likely because we are disconnected from the internet), ex={ex}"
+        )
+        return []
+    except requests.exceptions.ConnectionError as ex:
+        warn(
+            f"Network failure (likely because we are disconnected from the internet), ex={ex}"
+        )
+        return []
+    return messages
 
 
 def debug(message):

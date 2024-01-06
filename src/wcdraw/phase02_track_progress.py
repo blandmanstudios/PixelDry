@@ -13,9 +13,9 @@ from common import (
     RenderStage,
     json_pretty_print,
     get_percentage_from_content,
+    safe_get_discord_messages,
 )
 
-API_ENDPOINT = "https://discord.com/api/v10"
 MAX_ATTEMPTS_TO_SCRAPE = 100
 
 
@@ -68,12 +68,12 @@ def main_loop_iteration(token, session):
     for prompt in prompts:
         # use a hack on the messages API to get a message using the messages api
         # because you need a "bot" token to request a specific message
-        headers = {"Authorization": token}
-        resp = requests.get(
-            f"{API_ENDPOINT}/channels/{prompt.channel_id}/messages?limit=3&around={prompt.message_id}",
-            headers=headers,
+        messages = safe_get_discord_messages(
+            token=token,
+            channel_id=prompt.channel_id,
+            message_id=prompt.message_id,
+            count=3,
         )
-        messages = resp.json()
         found = False
         for message in messages:
             if (
