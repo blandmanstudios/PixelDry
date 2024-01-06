@@ -114,9 +114,14 @@ def get_latest_messages(token, channel_id, count=100):
             headers=headers,
         )
         messages = resp.json()
+    except requests.exceptions.SSLError as ex:
+        warn(
+            f"Network failure (likely because we are disconnected from the internet), ex={ex}"
+        )
+        return []
     except requests.exceptions.ConnectionError as ex:
         warn(
-            f"Network failure (potentially because we are disconnected from the internet), ex={ex}"
+            f"Network failure (likely because we are disconnected from the internet), ex={ex}"
         )
         return []
     # json_formatted_str = json.dumps(res, indent=4)
