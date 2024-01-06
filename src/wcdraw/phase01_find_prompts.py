@@ -93,35 +93,17 @@ def main_loop_iteration(token, channel_ids, session):
             continue
         special_string = message["content"].split(" ")[-2:-1][0]
         if "(0%)" in special_string:
+            # TODO: We should add "(Waiting to start)" to this condition
             message_is_queued_to_start_soon = True
-            # print("FOUNDONE")
             info = get_prompt_info(message, session)
         elif "(" in special_string and "%)" in special_string:
             # There is nothing (very) useful about finding an in-progress render
-            # if we cant track it from the beginning
+            # if we cant track it from the beginning, so do nothing with it
             pass
         else:
             # For the images that are finished we check if they are one of our
             # renders and if they are we should save their final info
-            if "attachments" in message and len(message["attachments"]) > 0:
-                attachment = message["attachments"][0]
-                render_id = (
-                    attachment["filename"].rstrip(".png").split("_")[-1]
-                )
-                q = session.query(Prompt).filter(
-                    (Prompt.render_id == render_id)
-                    & (Prompt.final_url == None)
-                    & (Prompt.final_message_id == None)
-                )
-                prompt = q.first()
-                if prompt is not None:
-                    print(
-                        f"found the end of the render with prompt_id={prompt.id}"
-                    )
-                    prompt.final_url = attachment["url"]
-                    prompt.final_message_id = message["id"]
-                    session.add(prompt)
-                    session.commit()
+            info = save_finished_prompts(message, session)
 
 
 def get_latest_messages(token, channel_id, count=100):
@@ -165,6 +147,24 @@ def get_prompt_info(message, session):
         session.add(prompt)
         session.commit()
         print("it was new, added to db")
+
+
+def save_finished_prompts(message, session):
+    if "attachments" in message and len(message["attachments"]) > 0:
+        attachment = message["attachments"][0]
+        render_id = attachment["filename"].rstrip(".png").split("_")[-1]
+        q = session.query(Prompt).filter(
+            (Prompt.render_id == render_id)
+            & (Prompt.final_url == None)
+            & (Prompt.final_message_id == None)
+        )
+        prompt = q.first()
+        if prompt is not None:
+            print(f"found the end of the render with prompt_id={prompt.id}")
+            prompt.final_url = attachment["url"]
+            prompt.final_message_id = message["id"]
+            session.add(prompt)
+            session.commit()
 
 
 if __name__ == "__main__":
