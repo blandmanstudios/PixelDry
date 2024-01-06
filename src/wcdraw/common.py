@@ -79,5 +79,21 @@ def get_percentage_from_content(content_string):
     return None
 
 
+def debug(message):
+    print(message)
+
+
+def info(message):
+    print(message)
+
+
+def warn(message):
+    print(message)
+
+
+def error(message):
+    print(message)
+
+
 def json_pretty_print(in_val):
     print(json.dumps(in_val, indent=4))

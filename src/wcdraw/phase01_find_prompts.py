@@ -7,6 +7,7 @@ import json
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from common import Base, Prompt, timestring_to_datetime, json_pretty_print
+from common import warn
 
 
 API_ENDPOINT = "https://discord.com/api/v10"
@@ -107,11 +108,17 @@ def main_loop_iteration(token, channel_ids, engine):
 
 def get_latest_messages(token, channel_id, count=100):
     headers = {"Authorization": token}
-    resp = requests.get(
-        f"{API_ENDPOINT}/channels/{channel_id}/messages?limit={count}",
-        headers=headers,
-    )
-    messages = resp.json()
+    try:
+        resp = requests.get(
+            f"{API_ENDPOINT}/channels/{channel_id}/messages?limit={count}",
+            headers=headers,
+        )
+        messages = resp.json()
+    except requests.exceptions.ConnectionError as ex:
+        warn(
+            f"Network failure (potentially because we are disconnected from the internet), ex={ex}"
+        )
+        return []
     # json_formatted_str = json.dumps(res, indent=4)
     # print(json_formatted_str)
     return messages
@@ -132,6 +139,7 @@ def get_prompt_info(message, engine):
         print("found one at zero percent")
         if not prompt_discovered:
             # json_pretty_print(message)
+            print("it was new")
             prompt = Prompt(
                 prompt_text=prompt_text,
                 author_id=author_id,
@@ -144,7 +152,7 @@ def get_prompt_info(message, engine):
             message = prompt.as_json()
             session.add(prompt)
             session.commit()
-            print("it was new, added to db")
+            print("added to db")
 
 
 def save_finished_prompts(message, engine):
