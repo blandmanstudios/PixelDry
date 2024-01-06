@@ -112,8 +112,14 @@ def get_latest_messages(token, channel_id, count=100):
         resp = requests.get(
             f"{API_ENDPOINT}/channels/{channel_id}/messages?limit={count}",
             headers=headers,
+            timeout=10,
         )
         messages = resp.json()
+    except requests.exceptions.ReadTimeout as ex:
+        warn(
+            f"Network failure (likely because we are disconnected from the internet), ex={ex}"
+        )
+        return []
     except requests.exceptions.SSLError as ex:
         warn(
             f"Network failure (likely because we are disconnected from the internet), ex={ex}"
