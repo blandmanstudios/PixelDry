@@ -73,9 +73,7 @@ class RenderOutputEvent(Base):
     timestamp = Column(DateTime)
 
     def as_dict(self):
-        return dict(
-            prompt_id=self.prompt_id,
-        )
+        return dict(prompt_id=self.prompt_id, timestamp=self.timestamp)
 
     def as_json(self):
         return json.dumps(self.as_dict())
@@ -141,17 +139,16 @@ def get_top_n_prompt_ids(engine, n_prompts=5, ready=False):
     # The goal is to stream stuff that has never been seen and created recently (first)
     #   and if there is non of that, fallback to something that will feel trivial to a viewer
     with Session(engine) as session:
-        subq = (
-            session.query(
-                Prompt.id.label("id"),
-                Prompt.timestamp.label("create_timestamp"),
-                func.count(RenderStage.id).label("render_stages"),
-                Prompt.final_url.label("final_url"),
-            )
-            .outerjoin(RenderStage)
-            .group_by(Prompt.id)
-            .subquery()
+        subq = session.query(
+            Prompt.id.label("id"),
+            Prompt.local_video_path.label("local_video_path"),
+            Prompt.timestamp.label("create_timestamp"),
+            func.count(RenderStage.id).label("render_stages"),
+            Prompt.final_url.label("final_url"),
         )
+        if ready:
+            subq = subq.filter(Prompt.local_video_path.is_not(None))
+        subq = subq.outerjoin(RenderStage).group_by(Prompt.id).subquery()
         q = (
             select(
                 subq.c.id,

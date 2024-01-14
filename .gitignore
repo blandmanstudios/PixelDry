@@ -6,3 +6,7 @@ __pycache__/
 phase01_output.txt
 phase02_output.txt
 data/
+
+outdir/prompt_*.mp4
+outdir/vid00*.mp4
+workdir/
