@@ -29,6 +29,7 @@ class Prompt(Base):
     timestamp = Column(DateTime)
     is_abandoned = Column(Boolean, default=False)
     n_tries = Column(Integer, default=0)
+    local_video_path = Column(Text)
     render_stages = relationship("RenderStage")
 
     def as_dict(self):

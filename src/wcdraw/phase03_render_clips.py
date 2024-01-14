@@ -3,7 +3,7 @@ import argparse
 import yaml
 import time
 import json
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, update
 from sqlalchemy.orm import Session
 from common import Base, Prompt, RenderStage, RenderOutputEvent
 from common import timestring_to_datetime, json_pretty_print
@@ -177,12 +177,18 @@ def main_loop_iteration(engine):
 
     # Move each output video to a destination folder
     for item in prompt_info_arr:
-        shutil.move(
-            item["output_video_path"],
-            f"outdir/prompt_{item['prompt_id']}_output.mp4",
-        )
-        # TODO -- save the output file path to the database
-        # so this render can be used
+        item[
+            "local_video_path"
+        ] = f"outdir/prompt_{item['prompt_id']}_output.mp4"
+        shutil.move(item["output_video_path"], item["local_video_path"])
+        with Session(engine) as session:
+            q = (
+                update(Prompt)
+                .where(Prompt.id == item["prompt_id"])
+                .values(local_video_path=item["local_video_path"])
+            )
+            session.execute(q)
+            session.commit()
 
     # Cleanup by removing the working directories
     for item in prompt_info_arr:
