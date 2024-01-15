@@ -200,7 +200,6 @@ def main_loop_iteration(engine):
     for item in os.listdir(OUTDIR):
         if item.startswith("prompt_") and item.endswith("_output.mp4"):
             detected_prompt_id = int(item.split("_")[1])
-            print(detected_prompt_id)
             if detected_prompt_id not in prompt_ids:
                 print(f"safe to remove output file {item}")
                 with Session(engine) as session:
