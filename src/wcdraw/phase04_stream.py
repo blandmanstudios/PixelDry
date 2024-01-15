@@ -95,9 +95,12 @@ def queue_up_enough_videos(
     prompt_ids = get_top_n_prompt_ids(engine, video_count, ready=True)
     number = 0
     for i, prompt_id in enumerate(prompt_ids):
+        output_video_slot = "vid%04d.mp4" % (
+            (i + n_previously_queued) % LOOP_LENGTH
+        )
         shutil.copy(
             f"outdir/prompt_{prompt_id}_output.mp4",
-            "outdir/vid%04d.mp4" % ((i + n_previously_queued) % LOOP_LENGTH),
+            f"outdir/{output_video_slot}",
         )
         # log this as a render event that this video got queued up to run at X'oclock
         event = RenderOutputEvent(
@@ -106,6 +109,7 @@ def queue_up_enough_videos(
             + timedelta(
                 seconds=EVENT_DURATION_SEC * (i + n_previously_queued)
             ),
+            output_video_slot=output_video_slot,
         )
         with Session(engine) as session:
             session.add(event)

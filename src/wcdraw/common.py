@@ -71,6 +71,7 @@ class RenderOutputEvent(Base):
     id = Column(Integer, primary_key=True)
     prompt_id = Column(Integer, ForeignKey("prompt.id"))
     timestamp = Column(DateTime)
+    output_video_slot = Column(Text)
 
     def as_dict(self):
         return dict(prompt_id=self.prompt_id, timestamp=self.timestamp)
