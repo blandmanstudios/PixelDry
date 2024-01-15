@@ -173,7 +173,7 @@ def main_loop_iteration(engine):
                 f"output.mp4",
             ]
         )
-        os.system(f"cd {item['workdir']}; {cmd}")
+        os.system(f"cd {item['workdir']}; {cmd} >/dev/null 2>&1")
 
     # Move each output video to a destination folder
     for item in prompt_info_arr:
