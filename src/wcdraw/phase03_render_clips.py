@@ -177,9 +177,6 @@ def main_loop_iteration(engine):
 
     # Move each output video to a destination folder
     for item in prompt_info_arr:
-        item[
-            "local_video_path"
-        ] = f"outdir/prompt_{item['prompt_id']}_output.mp4"
         shutil.move(item["output_video_path"], item["local_video_path"])
         with Session(engine) as session:
             q = (
@@ -218,11 +215,13 @@ def get_info_on_prompts(prompt_ids, engine):
                     stage.local_path
                 ):
                     source_stage_paths.append(stage.local_path)
+        local_video_path = f"outdir/prompt_{prompt_id}_output.mp4"
         if (
             prompt_id is not None
             and final_url is not None
             and prompt_text is not None
             and len(source_stage_paths) > 0
+            and not os.path.exists(local_video_path)
         ):
             result_arr.append(
                 dict(
@@ -230,6 +229,7 @@ def get_info_on_prompts(prompt_ids, engine):
                     final_url=final_url,
                     prompt_text=prompt_text,
                     source_stage_paths=source_stage_paths,
+                    local_video_path=local_video_path,
                 )
             )
     return result_arr
@@ -238,7 +238,7 @@ def get_info_on_prompts(prompt_ids, engine):
 def create_annotated_image(prompt_text, input_path, output_path):
     # Create an image which is the annotated final render
     img = Image.open(input_path).convert("RGBA")
-    myFont = ImageFont.truetype("FreeMonoBold.ttf", 20)
+    myFont = ImageFont.truetype("FreeMonoBold.ttf", 120)
     img_width_px, img_height_px = img.size
     shadow_overlay = Image.new("RGBA", img.size, (255, 255, 255, 0))
     text_overlay = Image.new("RGBA", img.size, (255, 255, 255, 0))
@@ -272,6 +272,8 @@ def convert_png_to_webp(dirname, infname, outfname):
     proc = subprocess.Popen(
         ["ffmpeg", "-y", "-i", infname, "-c:v", "libwebp", outfname],
         cwd=dirname,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
     )
     proc.communicate()
 
