@@ -16,6 +16,8 @@ import textwrap
 from PIL import Image, ImageDraw, ImageFont
 import subprocess
 
+OUTDIR = "outdir"
+
 
 def main():
     parser = argparse.ArgumentParser(prog="wcdraw - find prompts")
@@ -191,7 +193,25 @@ def main_loop_iteration(engine):
     for item in prompt_info_arr:
         shutil.rmtree(item["workdir"])
 
-    # TODO -- cleanup rendered videos which are unlikely to be needed soon
+    # Cleanup rendered videos that are unlikely to be needed soon (because
+    # they are no longer in the top N, likely because they recently got
+    # queued up for streaming)
+    for item in os.listdir(OUTDIR):
+        if item.startswith("prompt_") and item.endswith("_output.mp4"):
+            detected_prompt_id = int(item.split("_")[1])
+            print(detected_prompt_id)
+            if detected_prompt_id not in prompt_ids:
+                print(f"safe to remove output file {item}")
+                with Session(engine) as session:
+                    q = (
+                        update(Prompt)
+                        .where(Prompt.id == detected_prompt_id)
+                        .values(local_video_path=None)
+                    )
+                    session.execute(q)
+                    session.commit()
+                    os.remove(f"{OUTDIR}/{item}")
+
     return
 
 
@@ -215,7 +235,7 @@ def get_info_on_prompts(prompt_ids, engine):
                     stage.local_path
                 ):
                     source_stage_paths.append(stage.local_path)
-        local_video_path = f"outdir/prompt_{prompt_id}_output.mp4"
+        local_video_path = f"{OUTDIR}/prompt_{prompt_id}_output.mp4"
         if (
             prompt_id is not None
             and final_url is not None
