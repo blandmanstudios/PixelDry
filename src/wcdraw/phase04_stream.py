@@ -30,9 +30,15 @@ def main():
         default=-1,
         help="number of loop iterations, -1 for infinite",
     )
+    parser.add_argument(
+        "--dry-run",
+        action=argparse.BooleanOptionalAction,
+        help="dont run stream, just consume videos",
+    )
     args = parser.parse_args()
     with open(args.config, "r") as file:
         params = yaml.safe_load(file)
+    dry_run = args.dry_run
     sqldb_username = params["sqldb_username"]
     sqldb_password = params["sqldb_password"]
     primary_stream_url = params["primary_stream_url"]
@@ -45,7 +51,10 @@ def main():
 
     start_time = datetime.utcnow()
     n_queued = queue_up_enough_videos(start_time, engine, 6)
-    process = launch_ffmpeg(primary_stream_url, stream_key)
+    if not dry_run:
+        process = launch_ffmpeg(primary_stream_url, stream_key)
+    else:
+        process = None
     print(f"process_is_alive={is_process_alive(process)}")
 
     i = 0
@@ -57,7 +66,8 @@ def main():
             print("ffmpeg has died, we gotta start over")
             start_time = datetime.utcnow()
             n_queued = queue_up_enough_videos(start_time, engine, 6)
-            process = launch_ffmpeg(primary_stream_url, stream_key)
+            if not dry_run:
+                process = launch_ffmpeg(primary_stream_url, stream_key)
 
         # check that we have enought render events queued up to keep ffmpeg entertained by doing now - starttime modulo total time
         good_till_time = start_time + timedelta(
@@ -75,7 +85,8 @@ def main():
 
         time.sleep(1)
         i = i + 1
-    process.kill()
+    if not dry_run:
+        process.kill()
 
 
 def queue_up_enough_videos(
@@ -148,6 +159,11 @@ def launch_ffmpeg(stream_url, stream_key):
 
 
 def is_process_alive(proc):
+    # for dry run mode proc is None, simulate alive
+    if proc is None:
+        return True
+
+    # poll returns None when still running
     return proc.poll() is None
 
 
