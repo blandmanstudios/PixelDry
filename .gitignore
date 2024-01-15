@@ -9,4 +9,5 @@ data/
 
 outdir/prompt_*.mp4
 outdir/vid00*.mp4
+outdir/t_vid00*.mp4
 workdir/
