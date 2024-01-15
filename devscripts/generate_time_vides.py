@@ -54,7 +54,7 @@ def main():
             os.remove(dirname + "/" + item)
     for item in os.listdir(dirname):
         if "t_vid" in item and ".mp4" in item:
-            os.rename(dirname + '/' + item, 'outdir/' + item)
+            os.rename(dirname + "/" + item, "outdir/" + item)
     pass
 
 
