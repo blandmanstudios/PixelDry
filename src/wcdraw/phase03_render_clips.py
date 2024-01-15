@@ -17,6 +17,7 @@ from PIL import Image, ImageDraw, ImageFont
 import subprocess
 
 OUTDIR = "outdir"
+NUMBER_TO_MAINTAIN = 9
 
 
 def main():
@@ -54,7 +55,7 @@ def main():
 
 
 def main_loop_iteration(engine):
-    prompt_ids = get_top_n_prompt_ids(engine, 5, False)
+    prompt_ids = get_top_n_prompt_ids(engine, NUMBER_TO_MAINTAIN, False)
     print(prompt_ids)
 
     prompt_info_arr = get_info_on_prompts(prompt_ids, engine)
