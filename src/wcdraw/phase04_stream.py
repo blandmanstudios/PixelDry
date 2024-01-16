@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from common import Base, get_top_n_prompt_ids, RenderOutputEvent
 
 EVENT_DURATION_SEC = 20
-LOOP_LENGTH = 100
+LOOP_LENGTH = 30
 TRIGGER_PROXIMITY = timedelta(seconds=60)
 
 
