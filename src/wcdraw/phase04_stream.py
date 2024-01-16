@@ -11,6 +11,10 @@ from common import Base, get_top_n_prompt_ids, RenderOutputEvent
 
 EVENT_DURATION_SEC = 20
 LOOP_LENGTH = 30
+# preliminary testing shows that we lose on second of video every loop
+# therefore when scheduling we should account for this drift
+LEAP_SECONDS_PER_LOOP = 1
+
 TRIGGER_PROXIMITY = timedelta(seconds=60)
 
 
@@ -69,9 +73,10 @@ def main():
             if not dry_run:
                 process = launch_ffmpeg(primary_stream_url, stream_key)
 
-        # check that we have enought render events queued up to keep ffmpeg entertained by doing now - starttime modulo total time
+        # check that we have enought render events queued up to keep ffmpeg entertained
+        drift_seconds = (n_queued // LOOP_LENGTH) * LEAP_SECONDS_PER_LOOP
         good_till_time = start_time + timedelta(
-            seconds=n_queued * EVENT_DURATION_SEC
+            seconds=(n_queued * EVENT_DURATION_SEC) - drift_seconds
         )
         now = datetime.utcnow()
         good_for_time = good_till_time - now
@@ -102,13 +107,16 @@ def queue_up_enough_videos(
             f"outdir/prompt_{prompt_id}_output.mp4",
             f"outdir/{output_video_slot}",
         )
+        drift_seconds = (
+            (n_previously_queued + i) // LOOP_LENGTH
+        ) * LEAP_SECONDS_PER_LOOP
+        timestamp_seconds = (
+            EVENT_DURATION_SEC * (i + n_previously_queued)
+        ) - drift_seconds
         # log this as a render event that this video got queued up to run at X'oclock
         event = RenderOutputEvent(
             prompt_id=prompt_id,
-            timestamp=start_time
-            + timedelta(
-                seconds=EVENT_DURATION_SEC * (i + n_previously_queued)
-            ),
+            timestamp=start_time + timedelta(seconds=timestamp_seconds),
             output_video_slot=output_video_slot,
         )
         with Session(engine) as session:
