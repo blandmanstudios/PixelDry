@@ -2,6 +2,7 @@
 
 import json
 import requests
+import shutil
 from datetime import datetime, timedelta
 from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean
 from sqlalchemy import ForeignKey, select, func, case, desc
@@ -78,6 +79,13 @@ class RenderOutputEvent(Base):
 
     def as_json(self):
         return json.dumps(self.as_dict())
+
+
+def download_image(url, filepath):
+    response = requests.get(url, stream=True)
+    with open(filepath, "wb") as outfile:
+        shutil.copyfileobj(response.raw, outfile)
+    return response.status_code != 404
 
 
 def timestring_to_datetime(timestring):

@@ -2,11 +2,43 @@
 import unittest
 from wcdraw.common import timestring_to_datetime, Prompt, Base
 from wcdraw.common import get_percentage_from_content
+from wcdraw.common import download_image
 from sqlalchemy import create_engine, update
 from sqlalchemy.orm import Session
+import os
 
 
 class TestMethods(unittest.TestCase):
+    def test_download_image(self):
+        local_path = "../workdir/scripting/testfile"
+        image_with_no_content = "https://cdn.discordapp.com/attachments/989268312036896818/1196706332808577114/not_a_valid_path.png"
+        r = download_image(image_with_no_content, local_path)
+        os.remove(local_path)
+        self.assertFalse(r)
+
+        image_with_content = "https://upload.wikimedia.org/wikipedia/commons/0/07/An_astronaut_riding_a_horse_%28Hiroshige%29_2022-08-30.png"
+        r = download_image(image_with_content, local_path)
+        os.remove(local_path)
+        self.assertTrue(r)
+
+    def test_array_tricks(self):
+        array = [dict(a=1), dict(a=2), dict(a=3), dict(a=4)]
+        self.assertEqual(len(array), 4)
+        failures = []
+        for item in array:
+            if item["a"] == 3:
+                failures.append(item)
+        for failure in failures:
+            array.remove(failure)
+        self.assertEqual(len(array), 3)
+        failures = []
+        for item in array:
+            if item["a"] == 4:
+                failures.append(item)
+        for failure in failures:
+            array.remove(failure)
+        self.assertEqual(len(array), 2)
+
     def test_some_sql(self):
         # this is a helpful function if you want to practice building queries
         engine = create_engine(

@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from common import Base, Prompt, RenderStage, RenderOutputEvent
 from common import timestring_to_datetime, json_pretty_print
 from common import safe_get_discord_messages, get_top_n_prompt_ids
+from common import download_image
 import os
 import requests
 import shutil
@@ -66,20 +67,34 @@ def main_loop_iteration(engine):
         if not os.path.exists(item["workdir"]):
             os.mkdir(item["workdir"])
 
+    failures = []
     # Download, format, and convert each of the final images
     for item in prompt_info_arr:
         # Download the final image
         item["final_image_path"] = f"{item['workdir']}/final_image.png"
         # Download the image
-        response = requests.get(item["final_url"], stream=True)
-        with open(item["final_image_path"], "wb") as outfile:
-            shutil.copyfileobj(response.raw, outfile)
+        if not download_image(item["final_url"], item["final_image_path"]):
+            failures.append(item)
+            continue
+        # Convert image
         convert_png_to_webp(
             item["workdir"], "final_image.png", "final_image.webp"
         )
         item["final_image_path"] = f"{item['workdir']}/final_image.webp"
         # Resize adding margin as necessary
         resize_file_in_place(item["final_image_path"], 1920, 1080)
+
+    # For instances where the download fails, mark and skip them
+    for failure in failures:
+        with Session(engine) as session:
+            q = (
+                update(Prompt)
+                .where(Prompt.id == failure["prompt_id"])
+                .values(final_url=None)
+            )
+            session.execute(q)
+            session.commit()
+        prompt_info_arr.remove(failure)
 
     # Create an annotated final product image with the right size and filetype
     for item in prompt_info_arr:
