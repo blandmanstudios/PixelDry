@@ -112,6 +112,9 @@ def get_latest_messages(token, channel_id, count=100):
 
 def get_prompt_info(message, engine):
     prompt_text = message["content"].split("**")[1]
+    # TODO need to add an error case for then prompt text contains more than
+    # two instances of **. This leads to truncated and even empty prompts shown
+    # to the user
     author_id = message["mentions"][0]["id"]
     author_username = message["mentions"][0]["username"]
     author_discriminator = message["mentions"][0]["discriminator"]

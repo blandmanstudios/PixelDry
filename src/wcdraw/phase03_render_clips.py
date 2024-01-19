@@ -281,6 +281,7 @@ def create_annotated_image(prompt_text, input_path, output_path):
     shadow_i3 = ImageDraw.Draw(shadow_overlay)
     margin = offset = 10
     num_lines = 0
+    line = ""
     char_width_px, char_height_px = myFont.getsize("0")
     max_line_length = math.floor((img_width_px - 10 - 10) / char_width_px)
     for line in textwrap.wrap(prompt_text, width=max_line_length):
