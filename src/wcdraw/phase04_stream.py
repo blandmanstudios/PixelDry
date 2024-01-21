@@ -9,7 +9,6 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from common import Base, get_top_n_prompt_ids, RenderOutputEvent
 
-EVENT_DURATION_SEC = 20
 LOOP_LENGTH = 3
 LOOK_AHEAD = 2
 VIDEO_LIST_FILE = "video_list.txt"
@@ -58,10 +57,7 @@ def main():
     )
     Base.metadata.create_all(engine)
 
-    calibration_time = datetime.utcnow()
-    n_queued = queue_up_enough_videos(
-        calibration_time, engine, LOOK_AHEAD, index_to_video
-    )
+    n_queued = queue_up_enough_videos(engine, LOOK_AHEAD, index_to_video)
     last_video_name = index_to_video[0]
     if not dry_run:
         process = launch_ffmpeg(primary_stream_url, stream_key)
@@ -76,10 +72,10 @@ def main():
         # restart ffmpeg if it is not running
         if not is_process_alive(process):
             print("ffmpeg has died, we gotta start over")
-            calibration_time = datetime.utcnow()
             n_queued = queue_up_enough_videos(
-                calibration_time, engine, LOOK_AHEAD, index_to_video
+                engine, LOOK_AHEAD, index_to_video
             )
+            last_video_name = index_to_video[0]
             if not dry_run:
                 process = launch_ffmpeg(primary_stream_url, stream_key)
 
@@ -91,10 +87,7 @@ def main():
         # if you get a valid location that ffmpeg is reading and ffmpeg has
         # clearly moved onto the next file, we need to queue another one up
         if video_name is not None and video_name != last_video_name:
-            calibration_time = datetime.utcnow()
-            n = queue_up_enough_videos(
-                calibration_time, engine, 1, index_to_video, n_queued
-            )
+            n = queue_up_enough_videos(engine, 1, index_to_video, n_queued)
             n_queued += n
             last_video_name = video_name
 
@@ -105,7 +98,7 @@ def main():
 
 
 def queue_up_enough_videos(
-    start_time, engine, video_count, index_to_video, n_previously_queued=0
+    engine, video_count, index_to_video, n_previously_queued=0
 ):
     prompt_ids = get_top_n_prompt_ids(engine, video_count, ready=True)
     number = 0
@@ -118,11 +111,10 @@ def queue_up_enough_videos(
             f"outdir/{output_video_slot}",
         )
         print(f"queueing up a video at slot {output_video_slot}")
-        # Log the time we expect this render to go out
-        timestamp_seconds = EVENT_DURATION_SEC * i
+        # Log the time we have added this to the circular queue to stream
         event = RenderOutputEvent(
             prompt_id=prompt_id,
-            timestamp=start_time + timedelta(seconds=timestamp_seconds),
+            timestamp=datetime.utcnow(),
             output_video_slot=output_video_slot,
         )
         with Session(engine) as session:
