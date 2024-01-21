@@ -4,7 +4,7 @@ import json
 import requests
 import shutil
 from datetime import datetime, timedelta
-from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean
+from sqlalchemy import Column, Integer, String, Text, DateTime, Float, Boolean
 from sqlalchemy import ForeignKey, select, func, case, desc
 from sqlalchemy.orm import declarative_base, relationship
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -72,6 +72,7 @@ class RenderOutputEvent(Base):
     id = Column(Integer, primary_key=True)
     prompt_id = Column(Integer, ForeignKey("prompt.id"))
     timestamp = Column(DateTime)
+    duration = Column(Float)
     output_video_slot = Column(Text)
 
     def as_dict(self):

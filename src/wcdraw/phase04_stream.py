@@ -5,6 +5,7 @@ import time
 from datetime import datetime, timedelta
 import subprocess
 import shutil
+import json
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from common import Base, get_top_n_prompt_ids, RenderOutputEvent
@@ -106,8 +107,9 @@ def queue_up_enough_videos(
         output_video_slot = index_to_video[
             (i + n_previously_queued) % LOOP_LENGTH
         ]
+        input_video_path = f"outdir/prompt_{prompt_id}_output.mp4"
         shutil.copy(
-            f"outdir/prompt_{prompt_id}_output.mp4",
+            input_video_path,
             f"outdir/{output_video_slot}",
         )
         print(f"queueing up a video at slot {output_video_slot}")
@@ -115,6 +117,7 @@ def queue_up_enough_videos(
         event = RenderOutputEvent(
             prompt_id=prompt_id,
             timestamp=datetime.utcnow(),
+            duration=get_video_duration(input_video_path),
             output_video_slot=output_video_slot,
         )
         with Session(engine) as session:
@@ -122,6 +125,17 @@ def queue_up_enough_videos(
             session.commit()
         number += 1
     return number
+
+
+def get_video_duration(filename):
+    result = subprocess.check_output(
+        f"ffprobe -v quiet -show_streams -select_streams v:0 -of json {filename}",
+        shell=True,
+    ).decode()
+    fields = json.loads(result)["streams"][0]
+    duration = float(fields["duration"])
+    print(f"duration was{duration}")
+    return duration
 
 
 def get_ffmpeg_location():
