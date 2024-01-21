@@ -128,10 +128,13 @@ def queue_up_enough_videos(
 
 
 def get_video_duration(filename):
-    result = subprocess.check_output(
-        f"ffprobe -v quiet -show_streams -select_streams v:0 -of json {filename}",
-        shell=True,
-    ).decode()
+    try:
+        result = subprocess.check_output(
+            f"ffprobe -v quiet -show_streams -select_streams v:0 -of json {filename}",
+            shell=True,
+        ).decode()
+    except subprocess.CalledProcessError as e:
+        return -1
     fields = json.loads(result)["streams"][0]
     duration = float(fields["duration"])
     print(f"duration was{duration}")
