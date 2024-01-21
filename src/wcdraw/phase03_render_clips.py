@@ -126,31 +126,22 @@ def main_loop_iteration(engine):
 
     # Arrange the images in order they should render (1 per second)
     for item in prompt_info_arr:
-        usable_stages = item["working_stage_paths"][-16:]
+        usable_stages = item["working_stage_paths"]
         index = 0
-        # first copy in the render stages (dupes as necessary)
+        # first copy in the render stages
         for stage in usable_stages:
             shutil.copy(stage, f"%s/seq_%04d.webp" % (item["workdir"], index))
             index += 1
-            if index <= 5 and len(usable_stages) < 10:
-                # reuse the first few images when we dont have a ton
-                shutil.copy(
-                    stage, f"%s/seq_%04d.webp" % (item["workdir"], index)
-                )
-                index += 1
         # Copy the final image twice
-        shutil.copy(
-            item["final_image_path"],
-            f"%s/seq_%04d.webp" % (item["workdir"], index),
-        )
-        index += 1
-        shutil.copy(
-            item["final_image_path"],
-            f"%s/seq_%04d.webp" % (item["workdir"], index),
-        )
-        index += 1
+        for i in range(3):
+            shutil.copy(
+                item["final_image_path"],
+                f"%s/seq_%04d.webp" % (item["workdir"], index),
+            )
+            index += 1
         # Fill the rest of the video with the annotated image
-        while index <= 19:
+        # Copy the annotated image 3 times
+        for i in range(5):
             shutil.copy(
                 item["annotated_image_path"],
                 f"%s/seq_%04d.webp" % (item["workdir"], index),
