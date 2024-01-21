@@ -10,12 +10,9 @@ from sqlalchemy.orm import Session
 from common import Base, get_top_n_prompt_ids, RenderOutputEvent
 
 EVENT_DURATION_SEC = 20
-LOOP_LENGTH = 30
-# preliminary testing shows that we lose on second of video every loop
-# therefore when scheduling we should account for this drift
-LEAP_SECONDS_PER_LOOP = 1
-
-TRIGGER_PROXIMITY = timedelta(seconds=60)
+LOOP_LENGTH = 3
+LOOK_AHEAD = 2
+VIDEO_LIST_FILE = "video_list.txt"
 
 
 def main():
@@ -47,46 +44,59 @@ def main():
     sqldb_password = params["sqldb_password"]
     primary_stream_url = params["primary_stream_url"]
     stream_key = params["stream_key"]
+
+    # put together a map of the video fnames in the loop
+    index_to_video = []
+    with open(f"outdir/{VIDEO_LIST_FILE}") as file:
+        for i, line in enumerate(file.readlines()):
+            video_name = line.split("'")[1]
+            index_to_video.append(video_name)
+
     engine = create_engine(
         f"mariadb+pymysql://{sqldb_username}:{sqldb_password}@localhost/wcddb?charset=utf8mb4",
         future=True,
     )
     Base.metadata.create_all(engine)
 
-    start_time = datetime.utcnow()
-    n_queued = queue_up_enough_videos(start_time, engine, 6)
+    calibration_time = datetime.utcnow()
+    n_queued = queue_up_enough_videos(
+        calibration_time, engine, LOOK_AHEAD, index_to_video
+    )
+    last_video_name = index_to_video[0]
     if not dry_run:
         process = launch_ffmpeg(primary_stream_url, stream_key)
+        # TODO: I need a try catch block that will kill process in any error
     else:
         process = None
+    print(f"n_queued={n_queued}, last_video_name={last_video_name}")
     print(f"process_is_alive={is_process_alive(process)}")
 
     i = 0
     while args.iterations < 0 or i < args.iterations:
-        # check that ffmpeg is still running, if its not, restart it (queueing up stuff as necessary)
-        print(f"process_is_alive={is_process_alive(process)}")
-
+        # restart ffmpeg if it is not running
         if not is_process_alive(process):
             print("ffmpeg has died, we gotta start over")
-            start_time = datetime.utcnow()
-            n_queued = queue_up_enough_videos(start_time, engine, 6)
+            calibration_time = datetime.utcnow()
+            n_queued = queue_up_enough_videos(
+                calibration_time, engine, LOOK_AHEAD, index_to_video
+            )
             if not dry_run:
                 process = launch_ffmpeg(primary_stream_url, stream_key)
 
-        # check that we have enought render events queued up to keep ffmpeg entertained
-        drift_seconds = (n_queued // LOOP_LENGTH) * LEAP_SECONDS_PER_LOOP
-        good_till_time = start_time + timedelta(
-            seconds=(n_queued * EVENT_DURATION_SEC) - drift_seconds
-        )
-        now = datetime.utcnow()
-        good_for_time = good_till_time - now
+        video_name = get_ffmpeg_location()
         print(
-            f"the current time is {now} which means we are good for {good_for_time} because we are good till {good_till_time}. should_run={good_for_time < TRIGGER_PROXIMITY}, n_queued={n_queued}"
+            f"last_video_name={last_video_name}, video_name={video_name}, n_queued={n_queued}, NEXT_SLOT={n_queued % LOOP_LENGTH}"
         )
-        if good_for_time < TRIGGER_PROXIMITY:
-            n = queue_up_enough_videos(start_time, engine, 1, n_queued)
+
+        # if you get a valid location that ffmpeg is reading and ffmpeg has
+        # clearly moved onto the next file, we need to queue another one up
+        if video_name is not None and video_name != last_video_name:
+            calibration_time = datetime.utcnow()
+            n = queue_up_enough_videos(
+                calibration_time, engine, 1, index_to_video, n_queued
+            )
             n_queued += n
-            print(f"queued up {n} new videos because we were getting to close")
+            last_video_name = video_name
 
         time.sleep(1)
         i = i + 1
@@ -95,25 +105,21 @@ def main():
 
 
 def queue_up_enough_videos(
-    start_time, engine, video_count, n_previously_queued=0
+    start_time, engine, video_count, index_to_video, n_previously_queued=0
 ):
     prompt_ids = get_top_n_prompt_ids(engine, video_count, ready=True)
     number = 0
     for i, prompt_id in enumerate(prompt_ids):
-        output_video_slot = "vid%04d.mp4" % (
+        output_video_slot = index_to_video[
             (i + n_previously_queued) % LOOP_LENGTH
-        )
+        ]
         shutil.copy(
             f"outdir/prompt_{prompt_id}_output.mp4",
             f"outdir/{output_video_slot}",
         )
-        drift_seconds = (
-            (n_previously_queued + i) // LOOP_LENGTH
-        ) * LEAP_SECONDS_PER_LOOP
-        timestamp_seconds = (
-            EVENT_DURATION_SEC * (i + n_previously_queued)
-        ) - drift_seconds
-        # log this as a render event that this video got queued up to run at X'oclock
+        print(f"queueing up a video at slot {output_video_slot}")
+        # Log the time we expect this render to go out
+        timestamp_seconds = EVENT_DURATION_SEC * i
         event = RenderOutputEvent(
             prompt_id=prompt_id,
             timestamp=start_time + timedelta(seconds=timestamp_seconds),
@@ -124,6 +130,25 @@ def queue_up_enough_videos(
             session.commit()
         number += 1
     return number
+
+
+def get_ffmpeg_location():
+    cmd = "fuser outdir/vid00*"
+    proc = subprocess.Popen(
+        cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+    )
+    stdout, stderr = proc.communicate()
+    # print(f'fuser output was stdout={stdout}, stderr={stderr}')
+    outstrings = stderr.decode("UTF-8").split("\n")
+    outstrings = [x for x in outstrings if x != ""]
+    if len(outstrings) > 1:
+        print("mutliple files are being read im confused")
+        return None
+    if len(outstrings) == 0:
+        print("no files being read")
+        return None
+    file_being_read = outstrings[0].split("/")[-1].rstrip(":")
+    return file_being_read
 
 
 def launch_ffmpeg(stream_url, stream_key):
@@ -138,7 +163,7 @@ def launch_ffmpeg(stream_url, stream_key):
         "-safe",
         "0",
         "-i",
-        "video_list.txt",
+        VIDEO_LIST_FILE,
         "-stream_loop",
         "-1",
         "-f",
