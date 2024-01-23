@@ -13,6 +13,8 @@ from common import Base, get_top_n_prompt_ids, RenderOutputEvent
 LOOP_LENGTH = 3
 LOOK_AHEAD = 2
 VIDEO_LIST_FILE = "video_list.txt"
+# ffmpeg process must be stored as a global so it can be referenced in cleanup
+process = None
 
 
 def main():
@@ -60,6 +62,7 @@ def main():
 
     n_queued = queue_up_enough_videos(engine, LOOK_AHEAD, index_to_video)
     last_video_name = index_to_video[0]
+    global process
     if not dry_run:
         process = launch_ffmpeg(primary_stream_url, stream_key)
         # TODO: I need a try catch block that will kill process in any error
@@ -220,4 +223,11 @@ def is_process_alive(proc):
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as ex:
+        # if we ran into a crash bug, any exception in execution, make sure
+        # to clean up the ffmpeg process if it is still running
+        if process is not None and process.poll() is not None:
+            process.kill()
+        raise ex
