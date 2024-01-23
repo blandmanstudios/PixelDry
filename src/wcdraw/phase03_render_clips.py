@@ -91,6 +91,7 @@ def main_loop_iteration(engine):
                 update(Prompt)
                 .where(Prompt.id == failure["prompt_id"])
                 .values(final_url=None)
+                .values(local_video_path=item["local_video_path"])
             )
             session.execute(q)
             session.commit()
@@ -176,7 +177,7 @@ def main_loop_iteration(engine):
                 "-vf",
                 "scale=1920:1080",
                 "-preset",
-                "slow",
+                "fast",
                 "-crf",
                 "18",
                 f"output.mp4",
@@ -206,7 +207,8 @@ def main_loop_iteration(engine):
     for item in os.listdir(OUTDIR):
         if item.startswith("prompt_") and item.endswith("_output.mp4"):
             detected_prompt_id = int(item.split("_")[1])
-            if detected_prompt_id not in prompt_ids:
+            top_prompt_ids = get_top_n_prompt_ids(engine, 50, True)
+            if detected_prompt_id not in top_prompt_ids:
                 print(f"safe to remove output file {item}")
                 with Session(engine) as session:
                     q = (
