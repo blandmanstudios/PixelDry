@@ -3,3 +3,4 @@ sqldb_password: EXAMPLE_PASSWORD_HERE
 discord_access_token: EXAMPLE_TOKEN
 primary_stream_url: EXAMPLE
 stream_key: EXAMPLE
+custom_music_file_list: EXAMPLE

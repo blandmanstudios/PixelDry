@@ -46,6 +46,9 @@ def main():
     sqldb_password = params["sqldb_password"]
     primary_stream_url = params["primary_stream_url"]
     stream_key = params["stream_key"]
+    custom_music_file_list = params.get(
+        "custom_music_file_list", "audio_list.txt"
+    )
 
     # put together a map of the video fnames in the loop
     index_to_video = []
@@ -64,7 +67,9 @@ def main():
     last_video_name = index_to_video[0]
     global process
     if not dry_run:
-        process = launch_ffmpeg(primary_stream_url, stream_key)
+        process = launch_ffmpeg(
+            primary_stream_url, stream_key, custom_music_file_list
+        )
         # TODO: I need a try catch block that will kill process in any error
     else:
         process = None
@@ -81,7 +86,9 @@ def main():
             )
             last_video_name = index_to_video[0]
             if not dry_run:
-                process = launch_ffmpeg(primary_stream_url, stream_key)
+                process = launch_ffmpeg(
+                    primary_stream_url, stream_key, custom_music_file_list
+                )
 
         video_name = get_ffmpeg_location()
         print(
@@ -163,7 +170,7 @@ def get_ffmpeg_location():
     return file_being_read
 
 
-def launch_ffmpeg(stream_url, stream_key):
+def launch_ffmpeg(stream_url, stream_key, custom_music_file_list):
     # create the start command
     cmd = [
         "ffmpeg",
@@ -183,7 +190,7 @@ def launch_ffmpeg(stream_url, stream_key):
         "-safe",
         "0",
         "-i",
-        "audio_list.txt",
+        custom_music_file_list,
         "-map",
         "0:v",
         "-map",
