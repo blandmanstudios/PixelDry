@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 import unittest
-from wcdraw.common import timestring_to_datetime, Prompt, Base
-from wcdraw.common import get_percentage_from_content
-from wcdraw.common import download_image
+from wpixdry.common import timestring_to_datetime, Prompt, Base
+from wpixdry.common import get_percentage_from_content
+from wpixdry.common import download_image
 from sqlalchemy import create_engine, update
 from sqlalchemy.orm import Session
 import os

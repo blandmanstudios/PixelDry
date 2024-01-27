@@ -8,7 +8,7 @@ from common import Base, Prompt, RenderOutputEvent
 
 
 def main():
-    parser = argparse.ArgumentParser(prog="wcdraw - find prompts")
+    parser = argparse.ArgumentParser(prog="wpixdry - command utilities")
     parser.add_argument(
         "--config",
         "-c",

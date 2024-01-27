@@ -18,7 +18,7 @@ process = None
 
 
 def main():
-    parser = argparse.ArgumentParser(prog="wcdraw - stream video")
+    parser = argparse.ArgumentParser(prog="wpixdry - stream video")
     parser.add_argument(
         "--config",
         "-c",

@@ -22,7 +22,7 @@ NUMBER_TO_MAINTAIN = 9
 
 
 def main():
-    parser = argparse.ArgumentParser(prog="wcdraw - find prompts")
+    parser = argparse.ArgumentParser(prog="wpixdry - render clips")
     parser.add_argument(
         "--config",
         "-c",

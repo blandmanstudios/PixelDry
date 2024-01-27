@@ -20,7 +20,7 @@ MAX_ATTEMPTS_TO_SCRAPE = 100
 
 
 def main():
-    parser = argparse.ArgumentParser(prog="wcdraw - track progress")
+    parser = argparse.ArgumentParser(prog="wpixdry - track progress")
     parser.add_argument(
         "--config",
         "-c",

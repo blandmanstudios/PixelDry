@@ -19,7 +19,7 @@ CHAN_ID_MAP = {
 
 
 def main():
-    parser = argparse.ArgumentParser(prog="wcdraw - find prompts")
+    parser = argparse.ArgumentParser(prog="wpixdry - find prompts")
     parser.add_argument(
         "--config",
         "-c",
