@@ -11,6 +11,7 @@
 
 ## Code Improvements
 - Right now we rely on (1) the filesystem, (2) that phase01, phase02, and phase 03 share a filesystem, and (3) that phase03 and phase04 hare a filesystem. It would be cool to modify the scripts so all "files" like images and videos are stored in a blob store (even mysql) for a few reasons. (1) these scripts dont need to run on the same machine (or container). (2) the scripts would be resistent to filesystem corruption. (3) I could backup my mysql database and know every bit of state is backed up. (4) it would be easier to write cleanup scripts because they would just need to modify mysql only. The downsides would be adding one more place scripts could fail and performance overhead of copying files over the the database
+- There needs to be a fix for prompts that extend beyond the bottom of the screen. Right now they just get truncated and the user can see them getting cut off. I should either shrink the font when the prompt is so long. Or cut it off with an elipse (...) at some point (like half the screen).
 
 ## Reliability improvements
 - I need to do testing and add error checking for cases when the local filesystem is full. Ideally that error checking would trigger an automatic cleaning
