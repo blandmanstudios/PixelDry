@@ -150,7 +150,7 @@ def main_loop_iteration(engine):
             index += 1
         # Copy in one black frame to end the video
         shutil.copy(
-            "scripting/discord_scrape/black_frame.webp",
+            "raw_frames/black_frame.webp",
             f"%s/seq_%04d.webp" % (item["workdir"], index),
         )
         index += 1
