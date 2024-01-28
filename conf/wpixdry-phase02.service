@@ -1,0 +1,15 @@
+[Unit]
+Description=component of watching-pixels-dry that tracks prompt render progress
+After=network.target mariadb.service wpixdry-phase01.service
+
+[Service]
+Type=simple
+ExecStart=/opt/watching-pixels-dry/src/wpixdry/phase02_track_progress.py -c /opt/watching-pixels-dry/secure_params.yml -i -1
+Restart=always
+User=steeve
+ProtectHome=false
+WorkingDirectory=/opt/watching-pixels-dry
+
+[Install]
+WantedBy=default.target
+RequiredBy=network.target

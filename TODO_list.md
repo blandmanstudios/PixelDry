@@ -1,7 +1,6 @@
 # Todo list
 
 ## Deployment
-- Setup systemd service so this can run at startup
 - Package python code into a module
 - Package all code into an rpm
 

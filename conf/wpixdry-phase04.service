@@ -1,0 +1,15 @@
+[Unit]
+Description=component of watching-pixels-dry that outputs video to live stream
+After=network.target mariadb.service wpixdry-phase03.service
+
+[Service]
+Type=simple
+ExecStart=/opt/watching-pixels-dry/src/wpixdry/phase04_stream.py -c /opt/watching-pixels-dry/secure_params.yml -i -1
+Restart=always
+User=steeve
+ProtectHome=false
+WorkingDirectory=/opt/watching-pixels-dry
+
+[Install]
+WantedBy=default.target
+RequiredBy=network.target
