@@ -242,7 +242,7 @@ def get_info_on_prompts(prompt_ids, engine):
                 if (
                     stage.local_path is not None
                     and os.path.isfile(stage.local_path)
-                    and stage.percentage != 0
+                    and os.path.getsize(stage.local_path) > 210
                 ):
                     source_stage_paths.append(stage.local_path)
         local_video_path = f"{OUTDIR}/prompt_{prompt_id}_output.mp4"
