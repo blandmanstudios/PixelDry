@@ -48,6 +48,11 @@ Option 2:
 ```mysql
 select n_dupes from (select count(id) as n_dupes from render_output_event GROUP BY prompt_id) as temptable WHERE n_dupes > 1;
 ```
+Option 3:
+Similar to option1, but shows organizes by what has happened recently
+```mysql
+select prompt_id, count(id), min(timestamp), max(timestamp) from render_output_event GROUP BY prompt_id order by timestamp desc limit 100;
+```
 
 
 ## Checking metatdata on prompts and output
