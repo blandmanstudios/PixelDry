@@ -14,7 +14,7 @@ import requests
 import shutil
 import math
 import textwrap
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, UnidentifiedImageError
 import subprocess
 
 OUTDIR = "outdir"
@@ -244,7 +244,14 @@ def get_info_on_prompts(prompt_ids, engine):
                     and os.path.isfile(stage.local_path)
                     and os.path.getsize(stage.local_path) > 210
                 ):
-                    source_stage_paths.append(stage.local_path)
+                    try:
+                        mytest = Image.open(stage.local_path)
+                        source_stage_paths.append(stage.local_path)
+                    except UnidentifiedImageError as ex:
+                        print(
+                            f"skipping an identified image, here is the exception: {ex}"
+                        )
+
         local_video_path = f"{OUTDIR}/prompt_{prompt_id}_output.mp4"
         if (
             prompt_id is not None
